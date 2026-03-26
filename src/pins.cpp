@@ -4,17 +4,14 @@
 
 // Define IR configuration here to avoid multiple definitions from headers
 
-
 void setupPins()
 {
     // define motor control pins
-    pinMode(AIN1, OUTPUT);
-    pinMode(AIN2, OUTPUT);
-    pinMode(PWMA, OUTPUT);
-
-    pinMode(BIN1, OUTPUT);
-    pinMode(BIN2, OUTPUT);
-    pinMode(PWMB, OUTPUT);
+    pinMode(PWM_A1, OUTPUT);
+    pinMode(PWM_A2, OUTPUT);
+    pinMode(PWM_B1, OUTPUT);
+    pinMode(PWM_B2, OUTPUT);
+    pinMode(N_SLEEP, OUTPUT);
 
     pinMode(BUZZER, OUTPUT);
 
