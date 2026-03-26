@@ -6,6 +6,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "defines.h"
+#include "menu.h"
 
 // Custom bitmap logo for loading screen
 static const unsigned char PROGMEM logo[] = {
@@ -38,6 +39,14 @@ public:
 
     // Throttled display update (respects DISPLAY_REFRESH_MS)
     bool shouldUpdate();
+
+    // Menu screen methods
+    void drawSpeedSelectorScreen(int currentSpeedLevel);
+    void drawSettingsScreen(const char *motorStatus = "ENABLED",
+                            const char *currentA = "0mA",
+                            const char *currentB = "0mA");
+    void drawSensorReadingsScreen(int *irValues, int irCount);
+    void drawStatusScreen(RobotMode mode, bool isPaused, int currentScreen);
 
 private:
     Adafruit_SSD1306 display;

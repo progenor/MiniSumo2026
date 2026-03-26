@@ -47,8 +47,6 @@ void Motor::initDRV8243()
 
     // Wait a moment for the fault logic to reset before driving
     delay(2);
-
-    digitalWrite(N_SLEEP, LOW);
 }
 
 void Motor::backward(int pwm)

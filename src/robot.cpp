@@ -4,6 +4,10 @@
 SpeedConfig speedConfig;
 
 Robot::Robot()
+    : currentMode(MODE_MENU),
+      currentMenuScreen(MENU_SCREEN_SPEED),
+      paused(false),
+      currentSpeedLevel(SPEED_LEVEL_MEDIUM)
 {
 }
 
@@ -31,6 +35,13 @@ void Robot::setup()
     // Setup IR sensors
     irSensors.setup();
 
+    // Setup button input
+    ButtonManager buttonManager;
+    buttonManager.setup();
+
+    // Apply default speed preset
+    applySpeedPreset(currentSpeedLevel);
+
     // Play startup melody
     playMelody();
 
@@ -42,15 +53,36 @@ void Robot::update()
     // Read all sensors
     irSensors.read();
 
-    // Update behavior based on sensors
-    updateBehavior();
-
-    // Display sensor feedback
-    display.displayIR(getIRValues(), IRCount);
+    // Handle based on current mode
+    if (currentMode == MODE_MENU)
+    {
+        // Update behavior and display menu screens
+        updateBehavior();
+        // Display will be handled in main.cpp based on currentMenuScreen
+    }
+    else if (currentMode == MODE_PAUSED)
+    {
+        // Paused mode: update behavior but motors are stopped
+        updateBehavior();
+        display.displayIR(getIRValues(), IRCount);
+    }
+    else
+    { // MODE_RUNNING
+        // Normal operation
+        updateBehavior();
+        display.displayIR(getIRValues(), IRCount);
+    }
 }
 
 void Robot::updateBehavior()
 {
+    // Don't execute motor commands if paused
+    if (paused)
+    {
+        motor.stop();
+        return;
+    }
+
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
 
@@ -74,5 +106,70 @@ void Robot::updateBehavior()
     else
     {
         motor.forward(speedConfig.search_speed);
+    }
+}
+
+void Robot::handleButtonGesture(ButtonGesture gesture)
+{
+    switch (gesture)
+    {
+    case GESTURE_SINGLE_PRESS:
+        // Single press: cycle menu screens
+        if (currentMode == MODE_MENU)
+        {
+            cycleMenuScreen();
+        }
+        else if (currentMode == MODE_RUNNING || currentMode == MODE_PAUSED)
+        {
+            // Single press while running: return to menu
+            currentMode = MODE_MENU;
+            currentMenuScreen = MENU_SCREEN_STATUS;
+            paused = false;
+        }
+        break;
+
+    case GESTURE_DOUBLE_PRESS:
+        // Double press: cycle speed presets
+        cycleSpeedLevel();
+        break;
+
+    case GESTURE_LONG_PRESS:
+        // Long press: toggle pause/resume
+        if (currentMode == MODE_MENU)
+        {
+            // Start running if in menu
+            currentMode = MODE_RUNNING;
+            paused = false;
+        }
+        else if (currentMode == MODE_RUNNING)
+        {
+            // Pause if running
+            currentMode = MODE_PAUSED;
+            togglePause();
+        }
+        else if (currentMode == MODE_PAUSED)
+        {
+            // Resume if paused
+            currentMode = MODE_RUNNING;
+            paused = false;
+        }
+        break;
+
+    case GESTURE_NONE:
+    default:
+        // No gesture detected
+        break;
+    }
+}
+
+void Robot::applySpeedPreset(int level)
+{
+    if (level >= 0 && level < SPEED_LEVEL_COUNT)
+    {
+        const SpeedPreset &preset = SPEED_PRESETS[level];
+        speedConfig.attack_speed = preset.attack;
+        speedConfig.search_speed = preset.search;
+        speedConfig.turn_speed_moderate = preset.turn_moderate;
+        speedConfig.turn_speed_gentle = preset.turn_gentle;
     }
 }

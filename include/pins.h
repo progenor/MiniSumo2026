@@ -27,6 +27,9 @@
 #define QTR_LEFT 2
 #define QTR_RIGHT 3
 
+// Button Pin
+#define BUTTON_PIN 15
+
 const uint8_t IRPins[] = {SENSOR_LEFT, SENSOR_CENTER, SENSOR_RIGHT};
 const uint8_t QTRPins[] = {QTR_LEFT, QTR_RIGHT};
 

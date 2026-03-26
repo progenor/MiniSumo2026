@@ -7,6 +7,8 @@
 #include "ir.h"
 #include "melody.h"
 #include "defines.h"
+#include "menu.h"
+#include "button.h"
 
 class Robot
 {
@@ -25,13 +27,66 @@ public:
     // Get sensor readings (for menu display or debugging)
     int *getIRValues() { return irSensors.getAllValues(); }
 
+    // Get display for menu screen rendering
+    Display &getDisplay() { return display; }
+
+    // Menu and state management
+    RobotMode getMode() const { return currentMode; }
+    void setMode(RobotMode mode) { currentMode = mode; }
+
+    int getCurrentMenuScreen() const { return currentMenuScreen; }
+    void setCurrentMenuScreen(int screen)
+    {
+        currentMenuScreen = screen % MENU_SCREEN_COUNT;
+    }
+    void cycleMenuScreen()
+    {
+        currentMenuScreen = (currentMenuScreen + 1) % MENU_SCREEN_COUNT;
+    }
+
+    bool isPaused() const { return paused; }
+    void togglePause()
+    {
+        paused = !paused;
+        if (paused)
+        {
+            motor.stop();
+        }
+    }
+
+    int getCurrentSpeedLevel() const { return currentSpeedLevel; }
+    void setSpeedLevel(int level)
+    {
+        if (level >= 0 && level < SPEED_LEVEL_COUNT)
+        {
+            currentSpeedLevel = level;
+            applySpeedPreset(level);
+        }
+    }
+    void cycleSpeedLevel()
+    {
+        setSpeedLevel((currentSpeedLevel + 1) % SPEED_LEVEL_COUNT);
+    }
+
+    // Handle button gesture input
+    void handleButtonGesture(ButtonGesture gesture);
+
 private:
     Motor motor;
     Display display;
     IRSensors irSensors;
 
+    // Menu state
+    RobotMode currentMode;
+    int currentMenuScreen;
+    bool paused;
+    int currentSpeedLevel;
+
     // Decision-making: read sensors and command motors
     void updateBehavior();
+
+    // Apply speed preset to speed config
+    void applySpeedPreset(int level);
 };
 
 #endif // ROBOT_H

@@ -140,3 +140,43 @@ void Display::drawCurentReading(const char *MotorA_current = "NAN",
 
     display.display();
 }
+
+void Display::drawSpeedSelectorScreen(int currentSpeedLevel)
+{
+    if (!shouldUpdate())
+        return;
+
+    display.clearDisplay();
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(1);
+    display.setTextWrap(false);
+
+    // Title
+    display.setCursor(0, 0);
+    display.print("SPEED SELECTOR");
+
+    // Draw three speed options with highlight
+    const char *speedNames[] = {"LOW", "MEDIUM", "HIGH"};
+    uint8_t y_positions[] = {16, 32, 48};
+
+    for (int i = 0; i < SPEED_LEVEL_COUNT; i++)
+    {
+        display.setCursor(10, y_positions[i]);
+
+        // Highlight current speed level
+        if (i == currentSpeedLevel)
+        {
+            display.print("> ");
+            display.setTextSize(2);
+            display.print(speedNames[i]);
+            display.setTextSize(1);
+        }
+        else
+        {
+            display.print("  ");
+            display.print(speedNames[i]);
+        }
+    }
+
+    display.display();
+}
