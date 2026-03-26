@@ -18,8 +18,8 @@
 #define N_SLEEP 22 // GP22 controls both drivers' nSLEEP pins
 #define BUZZER 3
 
-// --- Sensor Configuration ---
-#define QTRSensorCount 8
+#define SensorCount 3
+int SensorPins[SensorCount] = {14, 13, 12}; // S0, S1, S2 connected to GP14, GP13, GP12
 
 // Display object
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -58,19 +58,24 @@ void displayPrint(const char *text, double value = -1)
 void display_IR(uint16_t *irValues)
 {
     display.clearDisplay();
-    uint8_t bar_width = SCREEN_WIDTH / QTRSensorCount;
-    if (bar_width < 2)
-        bar_width = 2;
+    uint8_t bar_width = SCREEN_WIDTH / SensorCount;
+    if (bar_width < 2) bar_width = 2;
 
-    for (uint8_t i = 0; i < QTRSensorCount; i++)
+    for (uint8_t i = 0; i < SensorCount; i++)
     {
-        uint16_t ir = irValues[i];
-        if (ir > 2500)
-            ir = 2500;
-        uint8_t bar_height = (ir * SCREEN_HEIGHT) / 2500;
+        uint16_t ir = irValues[i]; 
+        
+        // If sensor reads 1 (or HIGH), make the bar full height (64). Otherwise, 0.
+        // Note: If your sensors are active-LOW, change (ir == 1) to (ir == 0)
+        uint8_t bar_height = (ir == 1) ? SCREEN_HEIGHT : 0; 
+        
         uint8_t x = i * bar_width;
         uint8_t y = SCREEN_HEIGHT - bar_height;
-        display.fillRect(x, y, bar_width - 1, bar_height, SSD1306_WHITE);
+        
+        // Only draw the rectangle if there is a height to draw
+        if (bar_height > 0) {
+            display.fillRect(x, y, bar_width - 1, bar_height, SSD1306_WHITE);
+        }
     }
     display.display();
 }
@@ -85,7 +90,7 @@ void setup()
 
     // Initialize OLED display
     displayInit();
-    displayPrint("SpeedyBee!");
+    displayPrint("SpeedyBee V2");
     delay(1000);
 
     // 1. Configure pins as outputs
@@ -94,6 +99,12 @@ void setup()
     pinMode(PWM_B1, OUTPUT);
     pinMode(PWM_B2, OUTPUT);
     pinMode(N_SLEEP, OUTPUT);
+
+
+    for(int i = 0;i < SensorCount; i++)
+    {
+        pinMode(SensorPins[i], INPUT);
+    }
 
     // 2. Start with all PWM pins LOW (Brake mode)
     digitalWrite(PWM_A1, LOW);
@@ -118,7 +129,7 @@ void setup()
     analogWrite(BUZZER, 0);
 }
 
-void loop()
+void motors()
 {
     // --- DRIVE MOTORS FORWARD ---
     // To drive forward: IN1 = PWM, IN2 = LOW
@@ -133,14 +144,51 @@ void loop()
     Serial.println("Motors Driving Forward...");
     delay(3000); // Run for 3 seconds
 
-    // --- BRAKE MOTORS ---
-    // To brake: IN1 = LOW, IN2 = LOW
-    analogWrite(PWM_A1, 0); // Turn off PWM
-    digitalWrite(PWM_A2, LOW);
+    // // --- BRAKE MOTORS ---
+    // // To brake: IN1 = LOW, IN2 = LOW
+    // analogWrite(PWM_A1, 0); // Turn off PWM
+    // digitalWrite(PWM_A2, LOW);
 
-    analogWrite(PWM_B1, 0); // Turn off PWM
-    digitalWrite(PWM_B2, LOW);
+    // analogWrite(PWM_B1, 0); // Turn off PWM
+    // digitalWrite(PWM_B2, LOW);
 
-    Serial.println("Motors Braking...");
-    delay(2000); // Stop for 2 seconds
+    // Serial.println("Motors Braking...");
+    // delay(2000); // Stop for 2 seconds
+
+
+    // // --- DRIVE MOTORS BACKWARD ---
+    // // To drive backward: IN1 = LOW, IN2 = PWM
+    // digitalWrite(PWM_A1, LOW);
+    // analogWrite(PWM_A2, 127); // Motor A at ~50% duty cycle backward
+
+    // digitalWrite(PWM_B1, LOW);
+    // analogWrite(PWM_B2, 127); // Motor B at ~50% duty cycle backward
+
+    // Serial.println("Motors Driving Backward...");
+    // delay(3000); // Run for 3 seconds
+}
+
+void readSensors()
+{
+    uint16_t irValues[SensorCount];
+    for (uint8_t i = 0; i < SensorCount; i++)
+    {
+        irValues[i] = digitalRead(SensorPins[i]);
+    }
+    for (uint8_t i = 0; i < SensorCount; i++)
+    {
+        Serial.print("IR Sensor ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(irValues[i]);
+    }
+    display_IR(irValues);
+}
+
+void loop()
+{
+    readSensors();
+    motors();
+
+    delay(5);
 }
