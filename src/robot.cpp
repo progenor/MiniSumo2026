@@ -13,13 +13,13 @@ void Robot::setup()
     Serial.begin(115200);
     delay(1000);
 
-    // Initialize I2C for OLED
+    // Initialize I2C for display
     Wire.begin();
 
     // Setup subsystems
     if (!display.setup())
     {
-        // OLED failed, but continue with motor operation
+        // display failed, but continue with motor operation
         Serial.println("Warning: Display initialization failed");
     }
     delay(500);

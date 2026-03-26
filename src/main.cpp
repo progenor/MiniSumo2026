@@ -9,6 +9,7 @@ void setup()
 {
     robot.setup();
 
+    // IMPORTANT: PUT TO HIGH if you want to use motors
     digitalWrite(N_SLEEP, LOW);
 }
 

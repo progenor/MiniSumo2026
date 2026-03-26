@@ -1,42 +1,42 @@
 #include "display.h"
 
 Display::Display()
-    : oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET),
+    : display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, display_RESET),
       lastUpdateTime(0)
 {
 }
 
 bool Display::setup()
 {
-    if (!oled.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
+    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
     {
         Serial.println("SSD1306 initialization failed!");
         return false;
     }
-    oled.clearDisplay();
-    oled.setTextColor(1);
-    oled.display();
+    display.clearDisplay();
+    display.setTextColor(1);
+    display.display();
     return true;
 }
 
 void Display::print(const char *text, double value)
 {
-    oled.clearDisplay();
-    oled.setTextSize(2);
-    oled.setTextColor(SSD1306_WHITE);
-    oled.setCursor(0, 0);
-    oled.print(text);
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);
+    display.print(text);
     if (value != -1)
     {
-        oled.println(value);
+        display.println(value);
     }
-    oled.display();
+    display.display();
 }
 
 void Display::clear()
 {
-    oled.clearDisplay();
-    oled.display();
+    display.clearDisplay();
+    display.display();
 }
 
 void Display::displayIR(int *irValues, int sensorCount)
@@ -44,7 +44,7 @@ void Display::displayIR(int *irValues, int sensorCount)
     if (!shouldUpdate())
         return; // Throttle updates
 
-    oled.clearDisplay();
+    display.clearDisplay();
     uint8_t bar_width = SCREEN_WIDTH / sensorCount;
     if (bar_width < 2)
         bar_width = 2;
@@ -60,10 +60,10 @@ void Display::displayIR(int *irValues, int sensorCount)
 
         if (bar_height > 0)
         {
-            oled.fillRect(x, y, bar_width - 1, bar_height, SSD1306_WHITE);
+            display.fillRect(x, y, bar_width - 1, bar_height, SSD1306_WHITE);
         }
     }
-    oled.display();
+    display.display();
 }
 
 bool Display::shouldUpdate()
@@ -79,15 +79,64 @@ bool Display::shouldUpdate()
 
 void Display::drawLoadingScreen(const char *status)
 {
-    oled.clearDisplay();
+    display.clearDisplay();
 
     // Draw custom bitmap logo
-    oled.drawBitmap(42, 2, image_Pasted_image_bits, 45, 50, 1);
+    display.drawBitmap(42, 2, logo, 45, 50, 1);
     // Layer 2
-    oled.setTextColor(1);
-    oled.setTextWrap(false);
-    oled.setCursor(35, 53);
-    oled.print("Loading...");
+    display.setTextColor(1);
+    display.setTextWrap(false);
+    display.setCursor(35, 53);
+    display.print("Loading...");
 
-    oled.display();
+    display.display();
+}
+
+void Display::drawMainScreen(void)
+{
+    display.clearDisplay();
+
+    // Pasted_image
+    display.drawBitmap(42, 0, logo, 45, 50, 1);
+
+    // Layer 2
+    display.setTextColor(1);
+    display.setTextWrap(false);
+    display.setCursor(23, 56);
+    display.print("T.F.S Robotics");
+
+    display.display();
+}
+
+void Display::drawCurentReading(const char *MotorA_current = "NAN",
+                                const char *MotorB_current = "NAN")
+{
+    display.clearDisplay();
+
+    // Battery
+    display.drawBitmap(0, 0, image_Battery_bits, 32, 32, 1);
+
+    // Layer 2
+    display.setTextColor(1);
+    display.setTextSize(2);
+    display.setTextWrap(false);
+    display.setCursor(24, 9);
+    display.print("A:");
+
+    // Battery copy 1
+    display.drawBitmap(0, 32, image_Battery_bits, 32, 32, 1);
+
+    // Layer 2 copy 1
+    display.setCursor(25, 41);
+    display.print("B:");
+
+    // Layer 5
+    display.setCursor(55, 9);
+    display.print(MotorB_current);
+
+    // Layer 5 copy 1
+    display.setCursor(56, 41);
+    display.print(MotorA_current);
+
+    display.display();
 }
