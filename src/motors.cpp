@@ -39,9 +39,11 @@ void Motor::initDRV8243()
 
     // Wait a moment for the fault logic to reset before driving
     delay(2);
+
+    digitalWrite(N_SLEEP, LOW);
 }
 
-void Motor::forward(int pwm)
+void Motor::backward(int pwm)
 {
     analogWrite(PWM_A1, pwm); // Motor A forward
     digitalWrite(PWM_A2, LOW);
@@ -50,7 +52,7 @@ void Motor::forward(int pwm)
     digitalWrite(PWM_B2, LOW);
 }
 
-void Motor::backward(int pwm)
+void Motor::forward(int pwm)
 {
     digitalWrite(PWM_A1, LOW);
     analogWrite(PWM_A2, pwm); // Motor A reverse
@@ -59,7 +61,7 @@ void Motor::backward(int pwm)
     analogWrite(PWM_B2, pwm); // Motor B reverse
 }
 
-void Motor::left(int pwm)
+void Motor::right(int pwm)
 {
     analogWrite(PWM_A1, pwm); // Motor A forward
     digitalWrite(PWM_A2, LOW);
@@ -68,7 +70,7 @@ void Motor::left(int pwm)
     analogWrite(PWM_B2, pwm); // Motor B reverse
 }
 
-void Motor::right(int pwm)
+void Motor::left(int pwm)
 {
     digitalWrite(PWM_A1, LOW);
     analogWrite(PWM_A2, pwm); // Motor A reverse

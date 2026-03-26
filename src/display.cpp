@@ -14,10 +14,7 @@ bool Display::setup()
         return false;
     }
     oled.clearDisplay();
-    oled.setTextSize(2);
-    oled.setTextColor(SSD1306_WHITE);
-    oled.setCursor(0, 0);
-    oled.println("SpeedyBee V2");
+    oled.setTextColor(1);
     oled.display();
     return true;
 }
@@ -78,4 +75,19 @@ bool Display::shouldUpdate()
         return true;
     }
     return false;
+}
+
+void Display::drawLoadingScreen(const char *status)
+{
+    oled.clearDisplay();
+
+    // Draw custom bitmap logo
+    oled.drawBitmap(42, 2, image_Pasted_image_bits, 45, 50, 1);
+    // Layer 2
+    oled.setTextColor(1);
+    oled.setTextWrap(false);
+    oled.setCursor(35, 53);
+    oled.print("Loading...");
+
+    oled.display();
 }

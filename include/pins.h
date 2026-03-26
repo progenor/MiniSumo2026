@@ -15,9 +15,9 @@
 #define BUZZER 3
 
 // IR Sensor Pins
-#define SENSOR_LEFT 14
+#define SENSOR_LEFT 12
 #define SENSOR_CENTER 13
-#define SENSOR_RIGHT 12
+#define SENSOR_RIGHT 14
 
 // QTR Sensor Pins
 #define QTR_LEFT 2

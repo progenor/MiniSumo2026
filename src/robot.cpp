@@ -23,6 +23,7 @@ void Robot::setup()
         Serial.println("Warning: Display initialization failed");
     }
     delay(500);
+    display.drawLoadingScreen();
 
     // Setup motor control
     motor.setup();
@@ -33,7 +34,6 @@ void Robot::setup()
     // Play startup melody
     playMelody();
 
-    display.print("Ready!");
     delay(1000);
 }
 

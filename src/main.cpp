@@ -8,6 +8,8 @@ Robot robot;
 void setup()
 {
     robot.setup();
+
+    digitalWrite(N_SLEEP, LOW);
 }
 
 void loop()
