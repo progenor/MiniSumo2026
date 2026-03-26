@@ -19,6 +19,10 @@ public:
     void right(int pwm = 128);
     void stop();
 
+    // Current sensing methods
+    float readMotorCurrent();  // Returns motor A current in Amps
+    float readMotorBCurrent(); // Returns motor B current in Amps
+
 private:
     // DRV8243 initialization
     void initDRV8243();

@@ -1,6 +1,11 @@
 #include "motors.h"
 #include "pins.h"
 
+// Current sensing constants (IPROPI configuration)
+const float R_IPROPI = 1000.0; // Resistor value in Ohms (1kΩ)
+const float A_IPROPI = 3075.0; // Datasheet scaling factor
+const float V_REF = 3.3;       // Pico reference voltage
+
 Motor::Motor()
 {
     // Constructor - pins will be initialized in setup()
@@ -14,6 +19,9 @@ void Motor::setup()
     pinMode(PWM_B1, OUTPUT);
     pinMode(PWM_B2, OUTPUT);
     pinMode(N_SLEEP, OUTPUT);
+
+    // Configure ADC for current sensing
+    analogReadResolution(12); // Set ADC to 12-bit resolution (0-4095)
 
     // Set all motor pins to LOW initially (brake mode)
     digitalWrite(PWM_A1, LOW);
@@ -85,4 +93,34 @@ void Motor::stop()
     digitalWrite(PWM_A2, LOW);
     digitalWrite(PWM_B1, LOW);
     digitalWrite(PWM_B2, LOW);
+}
+
+float Motor::readMotorCurrent()
+{
+    // 1. Read the raw ADC value (0 - 4095) from IPROPI pin
+    int rawADC = analogRead(IPROPI_A_PIN);
+
+    // 2. Convert raw ADC value to Voltage
+    float voltage = (rawADC / 4095.0) * V_REF;
+
+    // 3. Convert Voltage to Amps using IPROPI datasheet formula
+    // Formula: I = (V / R) * A_factor
+    float currentAmps = (voltage / R_IPROPI) * A_IPROPI;
+
+    return currentAmps; // Return current in Amps
+}
+
+float Motor::readMotorBCurrent()
+{
+    // 1. Read the raw ADC value (0 - 4095) from IPROPI_B pin
+    int rawADC = analogRead(IPROPI_B_PIN);
+
+    // 2. Convert raw ADC value to Voltage
+    float voltage = (rawADC / 4095.0) * V_REF;
+
+    // 3. Convert Voltage to Amps using IPROPI datasheet formula
+    // Formula: I = (V / R) * A_factor
+    float currentAmps = (voltage / R_IPROPI) * A_IPROPI;
+
+    return currentAmps; // Return current in Amps
 }

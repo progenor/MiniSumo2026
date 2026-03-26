@@ -14,6 +14,10 @@
 // Buzzer Pin
 #define BUZZER 3
 
+// Current Sensing Pin (IPROPI)
+#define IPROPI_A_PIN 26 // GP26 ADC input for motor A current sensing
+#define IPROPI_B_PIN 27 // GP27 ADC input for motor B current sensing
+
 // IR Sensor Pins
 #define SENSOR_LEFT 12
 #define SENSOR_CENTER 13
