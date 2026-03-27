@@ -103,8 +103,8 @@ void Display::drawMainScreen(void)
     display.setTextColor(1);
     display.setTextWrap(false);
     display.setCursor(23, 56);
+    display.setTextSize(1);
     display.print("T.F.S Robotics");
-
     display.display();
 }
 

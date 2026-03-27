@@ -2,10 +2,11 @@
 #define MENU_H
 
 // Menu screen indices
-#define MENU_SCREEN_LOGO 0
+#define MENU_SCREEN_MAIN 0
 #define MENU_SCREEN_SPEED 1
 #define MENU_SCREEN_CURRENT 2
-#define MENU_SCREEN_COUNT 3
+#define MENU_SCREEN_IR 3
+#define MENU_SCREEN_COUNT 4
 
 // Robot mode enumeration
 enum RobotMode

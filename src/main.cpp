@@ -43,7 +43,7 @@ void loop()
 
         switch (currentScreen)
         {
-        case MENU_SCREEN_LOGO:
+        case MENU_SCREEN_MAIN:
             robot.getDisplay().drawMainScreen();
             break;
 
@@ -60,6 +60,10 @@ void loop()
             robot.getDisplay().drawCurentReading(motorA_str, motorB_str);
             break;
         }
+
+        case MENU_SCREEN_IR:
+            robot.getDisplay().displayIR(robot.getIRValues(), IRCount);
+            break;
 
         default:
             robot.getDisplay().drawMainScreen();
