@@ -85,27 +85,32 @@ void Robot::updateBehavior()
 
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
+    // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
-    // Obstacle avoidance logic (IR-based)
-    // All three sensors detect obstacle -> move forward
+    // ALL sensors detect target -> FULL SPEED PUSH
     if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 1)
     {
-        motor.forward(speedConfig.search_speed);
+        motor.forward(speedConfig.attack_speed);
     }
-    // Left sensor detects obstacle -> turn right
-    else if (irValues[0] == 0 && irValues[1] == 1 && irValues[2] == 1)
+    // CENTER sensor detects -> DIRECT ATTACK
+    else if (irValues[1] == 1)
     {
-        motor.right(speedConfig.turn_speed_moderate);
+        motor.forward(speedConfig.attack_speed);
     }
-    // Right sensor detects obstacle -> turn left
-    else if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 0)
+    // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
+    else if (irValues[0] == 1)
     {
-        motor.left(speedConfig.turn_speed_moderate);
+        motor.left(speedConfig.attack_speed);
     }
-    // Default: move forward
+    // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
+    else if (irValues[2] == 1)
+    {
+        motor.right(speedConfig.attack_speed);
+    }
+    // NO sensors detect -> SEARCH by spinning in place
     else
     {
-        motor.forward(speedConfig.search_speed);
+        motor.right(speedConfig.search_speed);
     }
 }
 
