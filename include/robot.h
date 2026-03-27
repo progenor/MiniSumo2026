@@ -30,6 +30,9 @@ public:
     // Get display for menu screen rendering
     Display &getDisplay() { return display; }
 
+    // Get motor for sensor readings
+    Motor &getMotor() { return motor; }
+
     // Menu and state management
     RobotMode getMode() const { return currentMode; }
     void setMode(RobotMode mode) { currentMode = mode; }

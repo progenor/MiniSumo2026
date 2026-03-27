@@ -5,7 +5,7 @@ SpeedConfig speedConfig;
 
 Robot::Robot()
     : currentMode(MODE_MENU),
-      currentMenuScreen(MENU_SCREEN_SPEED),
+      currentMenuScreen(MENU_SCREEN_LOGO),
       paused(false),
       currentSpeedLevel(SPEED_LEVEL_MEDIUM)
 {
@@ -114,17 +114,10 @@ void Robot::handleButtonGesture(ButtonGesture gesture)
     switch (gesture)
     {
     case GESTURE_SINGLE_PRESS:
-        // Single press: cycle menu screens
+        // Single press: cycle menu screens (stay in menu)
         if (currentMode == MODE_MENU)
         {
             cycleMenuScreen();
-        }
-        else if (currentMode == MODE_RUNNING || currentMode == MODE_PAUSED)
-        {
-            // Single press while running: return to menu
-            currentMode = MODE_MENU;
-            currentMenuScreen = MENU_SCREEN_STATUS;
-            paused = false;
         }
         break;
 
@@ -134,25 +127,8 @@ void Robot::handleButtonGesture(ButtonGesture gesture)
         break;
 
     case GESTURE_LONG_PRESS:
-        // Long press: toggle pause/resume
-        if (currentMode == MODE_MENU)
-        {
-            // Start running if in menu
-            currentMode = MODE_RUNNING;
-            paused = false;
-        }
-        else if (currentMode == MODE_RUNNING)
-        {
-            // Pause if running
-            currentMode = MODE_PAUSED;
-            togglePause();
-        }
-        else if (currentMode == MODE_PAUSED)
-        {
-            // Resume if paused
-            currentMode = MODE_RUNNING;
-            paused = false;
-        }
+        // Long press: stop motor only
+        motor.stop();
         break;
 
     case GESTURE_NONE:

@@ -43,24 +43,26 @@ void loop()
 
         switch (currentScreen)
         {
+        case MENU_SCREEN_LOGO:
+            robot.getDisplay().drawMainScreen();
+            break;
+
         case MENU_SCREEN_SPEED:
             robot.getDisplay().drawSpeedSelectorScreen(robot.getCurrentSpeedLevel());
             break;
 
-        case MENU_SCREEN_SETTINGS:
-            robot.getDisplay().drawSettingsScreen("ENABLED", "N/A", "N/A");
+        case MENU_SCREEN_CURRENT:
+        {
+            // Format current readings as strings
+            char motorA_str[10], motorB_str[10];
+            snprintf(motorA_str, sizeof(motorA_str), "%.2f", robot.getMotor().readMotorCurrent());
+            snprintf(motorB_str, sizeof(motorB_str), "%.2f", robot.getMotor().readMotorBCurrent());
+            robot.getDisplay().drawCurentReading(motorA_str, motorB_str);
             break;
-
-        case MENU_SCREEN_SENSORS:
-            robot.getDisplay().drawSensorReadingsScreen(robot.getIRValues(), IRCount);
-            break;
-
-        case MENU_SCREEN_STATUS:
-            robot.getDisplay().drawStatusScreen(robot.getMode(), robot.isPaused(), currentScreen);
-            break;
+        }
 
         default:
-            robot.getDisplay().drawStatusScreen(robot.getMode(), robot.isPaused(), currentScreen);
+            robot.getDisplay().drawMainScreen();
             break;
         }
     }
