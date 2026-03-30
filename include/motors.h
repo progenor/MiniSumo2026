@@ -27,6 +27,13 @@ public:
     float getFilteredMotorCurrent();  // Returns alpha-filtered motor A current
     float getFilteredMotorBCurrent(); // Returns alpha-filtered motor B current
 
+    // Peak current tracking methods
+    void updatePeaks(); // Updates peak values based on current readings
+    float getPeakMotorACurrent();  // Returns peak motor A current since last reset
+    float getPeakMotorBCurrent();  // Returns peak motor B current since last reset
+    float getTotalPeakCurrent();   // Returns sum of peak currents
+    void resetPeaks(); // Resets peak values to zero
+
 private:
     // Alpha filter configuration
     static const float ALPHA_FILTER; // Filter coefficient (0.97 - very strong smoothing)
@@ -36,6 +43,10 @@ private:
     float filteredCurrent_B; // Cached filtered value for motor B
     bool isFirstRead_A;      // Flag to detect first read for motor A
     bool isFirstRead_B;      // Flag to detect first read for motor B
+
+    // Peak tracking variables
+    float peakCurrent_A; // Peak current for motor A
+    float peakCurrent_B; // Peak current for motor B
 
     // DRV8243 initialization
     void initDRV8243();

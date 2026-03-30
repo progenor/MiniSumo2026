@@ -16,6 +16,8 @@ Motor::Motor()
     filteredCurrent_B = 0.0f;
     isFirstRead_A = true;
     isFirstRead_B = true;
+    peakCurrent_A = 0.0f;
+    peakCurrent_B = 0.0f;
 }
 
 void Motor::setup()
@@ -170,4 +172,42 @@ float Motor::getFilteredMotorBCurrent()
     filteredCurrent_B = (ALPHA_FILTER * rawCurrent) + ((1.0f - ALPHA_FILTER) * filteredCurrent_B);
 
     return filteredCurrent_B;
+}
+
+void Motor::updatePeaks()
+{
+    // Update peak for motor A
+    float currentA = getFilteredMotorCurrent();
+    if (currentA > peakCurrent_A)
+    {
+        peakCurrent_A = currentA;
+    }
+
+    // Update peak for motor B
+    float currentB = getFilteredMotorBCurrent();
+    if (currentB > peakCurrent_B)
+    {
+        peakCurrent_B = currentB;
+    }
+}
+
+float Motor::getPeakMotorACurrent()
+{
+    return peakCurrent_A;
+}
+
+float Motor::getPeakMotorBCurrent()
+{
+    return peakCurrent_B;
+}
+
+float Motor::getTotalPeakCurrent()
+{
+    return peakCurrent_A + peakCurrent_B;
+}
+
+void Motor::resetPeaks()
+{
+    peakCurrent_A = 0.0f;
+    peakCurrent_B = 0.0f;
 }

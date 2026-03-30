@@ -33,6 +33,9 @@ public:
     void drawMainScreen(void);
     void drawCurentReading(const char *MotorA_current,
                            const char *MotorB_current);
+    void drawPEAK_Current(const char *peakA,
+                          const char *peakB,
+                          const char *peakTotal);
 
     // Display IR sensor bars (0-1 digital values)
     void displayIR(int *irValues, int sensorCount);

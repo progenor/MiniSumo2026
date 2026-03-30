@@ -53,6 +53,9 @@ void Robot::update()
     // Read all sensors
     irSensors.read();
 
+    // Update motor peak current tracking
+    motor.updatePeaks();
+
     // Handle based on current mode
     if (currentMode == MODE_MENU)
     {

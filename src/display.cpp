@@ -140,6 +140,50 @@ void Display::drawCurentReading(const char *MotorA_current = "NAN",
     display.display();
 }
 
+void Display::drawPEAK_Current(const char *peakA,
+                               const char *peakB,
+                               const char *peakTotal)
+{
+    display.clearDisplay();
+
+    // Battery
+    display.drawBitmap(1, 2, image_Battery_bits, 16, 16, 1);
+
+    // Layer 2
+    display.setTextColor(1);
+    display.setTextWrap(false);
+    display.setTextSize(1);
+    display.setCursor(19, 7);
+    display.print("Peak A:");
+
+    // Battery copy 1
+    display.drawBitmap(1, 19, image_Battery_bits, 16, 16, 1);
+
+    // Layer 2 copy 1
+    display.setCursor(19, 24);
+    display.print("Peak B:");
+
+    // Layer 5 - Peak A value
+    display.setCursor(81, 8);
+    display.print(peakA);
+
+    // Layer 5 copy 1 - Peak B value
+    display.setCursor(82, 24);
+    display.print(peakB);
+
+    // Layer 7 - Total label
+    display.setTextSize(2);
+    display.setCursor(3, 45);
+    display.print("Peak:");
+
+    // Layer 8 - Total peak value
+    display.setTextSize(2);
+    display.setCursor(67, 44);
+    display.print(peakTotal);
+
+    display.display();
+}
+
 void Display::drawSpeedSelectorScreen(int currentSpeedLevel)
 {
     if (!shouldUpdate())

@@ -61,6 +61,17 @@ void loop()
             break;
         }
 
+        case MENU_SCREEN_PEAK_CURRENT:
+        {
+            // Format peak current readings as strings
+            char peakA_str[10], peakB_str[10], peakTotal_str[10];
+            snprintf(peakA_str, sizeof(peakA_str), "%.2f", robot.getMotor().getPeakMotorACurrent());
+            snprintf(peakB_str, sizeof(peakB_str), "%.2f", robot.getMotor().getPeakMotorBCurrent());
+            snprintf(peakTotal_str, sizeof(peakTotal_str), "%.2f", robot.getMotor().getTotalPeakCurrent());
+            robot.getDisplay().drawPEAK_Current(peakA_str, peakB_str, peakTotal_str);
+            break;
+        }
+
         case MENU_SCREEN_IR:
             robot.getDisplay().displayIR(robot.getIRValues(), IRCount);
             break;

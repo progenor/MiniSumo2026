@@ -5,8 +5,9 @@
 #define MENU_SCREEN_MAIN 0
 #define MENU_SCREEN_SPEED 1
 #define MENU_SCREEN_CURRENT 2
-#define MENU_SCREEN_IR 3
-#define MENU_SCREEN_COUNT 4
+#define MENU_SCREEN_PEAK_CURRENT 3
+#define MENU_SCREEN_IR 4
+#define MENU_SCREEN_COUNT 5
 
 // Robot mode enumeration
 enum RobotMode
