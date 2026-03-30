@@ -130,13 +130,16 @@ void Robot::handleButtonGesture(ButtonGesture gesture)
         break;
 
     case GESTURE_DOUBLE_PRESS:
-        // Double press: cycle speed presets
-        cycleSpeedLevel();
+        // Double press: cycle speed presets (only on speed screen)
+        if (currentMenuScreen == MENU_SCREEN_SPEED)
+        {
+            cycleSpeedLevel();
+        }
         break;
 
     case GESTURE_LONG_PRESS:
-        // Long press: stop motor only
-        motor.stop();
+        // Long press: toggle pause/resume (works from any mode/screen)
+        togglePause();
         break;
 
     case GESTURE_NONE:

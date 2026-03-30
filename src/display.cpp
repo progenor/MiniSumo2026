@@ -147,20 +147,20 @@ void Display::drawPEAK_Current(const char *peakA,
     display.clearDisplay();
 
     // Battery
-    display.drawBitmap(1, 2, image_Battery_bits, 16, 16, 1);
+    display.drawBitmap(0, 2, image_Battery_bits_16x16, 16, 16, 1);
 
     // Layer 2
     display.setTextColor(1);
     display.setTextWrap(false);
     display.setTextSize(1);
-    display.setCursor(19, 7);
+    display.setCursor(18, 7);
     display.print("Peak A:");
 
     // Battery copy 1
-    display.drawBitmap(1, 19, image_Battery_bits, 16, 16, 1);
+    display.drawBitmap(0, 19, image_Battery_bits_16x16, 16, 16, 1);
 
     // Layer 2 copy 1
-    display.setCursor(19, 24);
+    display.setCursor(18, 24);
     display.print("Peak B:");
 
     // Layer 5 - Peak A value
@@ -168,7 +168,7 @@ void Display::drawPEAK_Current(const char *peakA,
     display.print(peakA);
 
     // Layer 5 copy 1 - Peak B value
-    display.setCursor(82, 24);
+    display.setCursor(81, 24);
     display.print(peakB);
 
     // Layer 7 - Total label
