@@ -13,9 +13,6 @@ ButtonManager buttonManager;
 void setup()
 {
     robot.setup();
-
-    // Initialize button input
-    buttonManager.setup();
 }
 
 void loop()

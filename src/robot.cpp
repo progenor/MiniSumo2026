@@ -7,7 +7,7 @@ Robot::Robot()
     : currentMode(MODE_MENU),
       currentMenuScreen(MENU_SCREEN_MAIN),
       paused(false),
-      currentSpeedLevel(SPEED_LEVEL_MEDIUM)
+      currentSpeedLevel(SPEED_LEVEL_LOW)
 {
 }
 
