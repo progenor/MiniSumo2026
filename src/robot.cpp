@@ -77,7 +77,11 @@ void Robot::update()
     }
 }
 
-void Robot::updateBehavior()
+// ===== OLD VERSION v1 - COMMENTED OUT =====
+// This was the original strategy that caused jitter at sensor intersections
+// Kept for reference/debugging
+/*
+void Robot::updateBehavior_OLD_v1()
 {
     // Don't execute motor commands if paused
     if (paused)
@@ -106,6 +110,62 @@ void Robot::updateBehavior()
         motor.left(speedConfig.attack_speed);
     }
     // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
+    else if (irValues[2] == 1)
+    {
+        motor.right(speedConfig.attack_speed);
+    }
+    // NO sensors detect -> SEARCH by spinning in place
+    else
+    {
+        motor.right(speedConfig.search_speed);
+    }
+}
+*/
+// ===== END OLD VERSION v1 =====
+
+void Robot::updateBehavior()
+{
+    // Don't execute motor commands if paused
+    if (paused)
+    {
+        motor.stop();
+        return;
+    }
+
+    // Get current IR sensor readings
+    int *irValues = irSensors.getAllValues();
+    // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
+
+    // NEW VERSION v2 - Handles sensor intersection overlaps
+    // The left/center and right/center sensors sometimes overlap due to physical placement
+    // Using reduced PWM for turns when intersections occur prevents jitter
+
+    // ALL sensors detect target -> FULL SPEED PUSH
+    if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 1)
+    {
+        motor.forward(speedConfig.attack_speed);
+    }
+    // LEFT + CENTER intersection -> GENTLE LEFT TURN (reduced speed to prevent jitter)
+    else if (irValues[0] == 1 && irValues[1] == 1)
+    {
+        motor.left(speedConfig.turn_speed_moderate);
+    }
+    // RIGHT + CENTER intersection -> GENTLE RIGHT TURN (reduced speed to prevent jitter)
+    else if (irValues[2] == 1 && irValues[1] == 1)
+    {
+        motor.right(speedConfig.turn_speed_moderate);
+    }
+    // CENTER sensor only -> DIRECT ATTACK
+    else if (irValues[1] == 1)
+    {
+        motor.forward(speedConfig.attack_speed);
+    }
+    // LEFT sensor only -> AGGRESSIVE LEFT TURN
+    else if (irValues[0] == 1)
+    {
+        motor.left(speedConfig.attack_speed);
+    }
+    // RIGHT sensor only -> AGGRESSIVE RIGHT TURN
     else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
