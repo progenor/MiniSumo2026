@@ -24,8 +24,8 @@
 #define SENSOR_RIGHT 14
 
 // QTR Sensor Pins
-#define QTR_LEFT 2
-#define QTR_RIGHT 3
+#define QTR_LEFT 10
+#define QTR_RIGHT 11
 
 // Button Pin
 #define BUTTON_PIN 15

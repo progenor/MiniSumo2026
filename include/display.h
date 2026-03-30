@@ -52,6 +52,7 @@ public:
                             const char *currentB = "0mA");
     void drawSensorReadingsScreen(int *irValues, int irCount);
     void drawStatusScreen(RobotMode mode, bool isPaused, int currentScreen);
+    void drawStrategySelectorScreen(void);
 
 private:
     Adafruit_SSD1306 display;

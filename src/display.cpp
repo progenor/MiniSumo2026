@@ -184,6 +184,37 @@ void Display::drawPEAK_Current(const char *peakA,
     display.display();
 }
 
+static const unsigned char PROGMEM image_Pin_arrow_right_bits[] = {0x04,0x00,0x06,0x00,0xff,0x00,0xff,0x80,0xff,0x00,0x06,0x00,0x04,0x00};
+
+const char* Layer_2_text = "Sting";
+const char* Layer_3_text = "Speed";
+
+void Display::drawStrategySelectorScreen(void)
+{
+    display.clearDisplay();
+
+    // Layer 1
+    display.setTextColor(1);
+    display.setTextWrap(false);
+    display.setCursor(56, 48);
+    display.print("Run");
+
+    // Layer 2
+    display.setTextSize(2);
+    display.setCursor(35, 24);
+    display.print(Layer_2_text);
+
+    // Layer 3
+    display.setTextSize(1);
+    display.setCursor(50, 8);
+    display.print(Layer_3_text);
+
+    // Pin_arrow_right
+    display.drawBitmap(23, 28, image_Pin_arrow_right_bits, 9, 7, 1);
+
+    display.display();
+}
+
 void Display::drawSpeedSelectorScreen(int currentSpeedLevel)
 {
     if (!shouldUpdate())
