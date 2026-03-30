@@ -244,19 +244,19 @@ void Display::drawSpeedSelectorScreen(int currentSpeedLevel)
 
     for (int i = 0; i < SPEED_LEVEL_COUNT; i++)
     {
-        display.setCursor(10, y_positions[i]);
-
         // Highlight current speed level
         if (i == currentSpeedLevel)
         {
-            display.print("> ");
+            // Draw bitmap arrow
+            display.drawBitmap(15, y_positions[i] + 3, image_Pin_arrow_right_bits, 9, 7, 1);
+            display.setCursor(30, y_positions[i]);
             display.setTextSize(2);
             display.print(speedNames[i]);
             display.setTextSize(1);
         }
         else
         {
-            display.print("  ");
+            display.setCursor(30, y_positions[i]);
             display.print(speedNames[i]);
         }
     }
