@@ -45,4 +45,13 @@ static const SpeedPreset SPEED_PRESETS[SPEED_LEVEL_COUNT] = {
     // HIGH
     {255, 180, 40, 25}};
 
+// Strategy enumeration
+enum Strategy
+{
+    STRATEGY_STING = 0,
+    STRATEGY_SPEED = 1,
+    STRATEGY_RUN = 2,
+    STRATEGY_COUNT = 3
+};
+
 #endif // MENU_H

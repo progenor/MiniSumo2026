@@ -73,6 +73,10 @@ void loop()
             robot.getDisplay().displayIR(robot.getIRValues(), IRCount);
             break;
 
+        case MENU_SCREEN_STRATEGY:
+            robot.getDisplay().drawStrategySelectorScreen(robot.getCurrentStrategy());
+            break;
+
         default:
             robot.getDisplay().drawMainScreen();
             break;

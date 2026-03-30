@@ -184,33 +184,42 @@ void Display::drawPEAK_Current(const char *peakA,
     display.display();
 }
 
-static const unsigned char PROGMEM image_Pin_arrow_right_bits[] = {0x04,0x00,0x06,0x00,0xff,0x00,0xff,0x80,0xff,0x00,0x06,0x00,0x04,0x00};
+static const unsigned char PROGMEM image_Pin_arrow_right_bits[] = {0x04, 0x00, 0x06, 0x00, 0xff, 0x00, 0xff, 0x80, 0xff, 0x00, 0x06, 0x00, 0x04, 0x00};
 
-const char* Layer_2_text = "Sting";
-const char* Layer_3_text = "Speed";
+const char *strategy_names[] = {"Sting", "Speed", "Run"};
 
-void Display::drawStrategySelectorScreen(void)
+void Display::drawStrategySelectorScreen(int currentStrategy)
 {
     display.clearDisplay();
-
-    // Layer 1
-    display.setTextColor(1);
-    display.setTextWrap(false);
-    display.setCursor(56, 48);
-    display.print("Run");
-
-    // Layer 2
-    display.setTextSize(2);
-    display.setCursor(35, 24);
-    display.print(Layer_2_text);
-
-    // Layer 3
+    display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1);
-    display.setCursor(50, 8);
-    display.print(Layer_3_text);
+    display.setTextWrap(false);
 
-    // Pin_arrow_right
-    display.drawBitmap(23, 28, image_Pin_arrow_right_bits, 9, 7, 1);
+    // Title
+    display.setCursor(0, 0);
+    display.print("STRATEGY");
+
+    // Draw three strategy options with highlight
+    uint8_t y_positions[] = {16, 32, 48};
+
+    for (int i = 0; i < STRATEGY_COUNT; i++)
+    {
+        // Highlight current strategy
+        if (i == currentStrategy)
+        {
+            // Draw bitmap arrow
+            display.drawBitmap(15, y_positions[i] + 3, image_Pin_arrow_right_bits, 9, 7, 1);
+            display.setCursor(30, y_positions[i]);
+            display.setTextSize(2);
+            display.print(strategy_names[i]);
+            display.setTextSize(1);
+        }
+        else
+        {
+            display.setCursor(30, y_positions[i]);
+            display.print(strategy_names[i]);
+        }
+    }
 
     display.display();
 }

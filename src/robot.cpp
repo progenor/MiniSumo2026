@@ -7,7 +7,8 @@ Robot::Robot()
     : currentMode(MODE_MENU),
       currentMenuScreen(MENU_SCREEN_MAIN),
       paused(false),
-      currentSpeedLevel(SPEED_LEVEL_LOW)
+      currentSpeedLevel(SPEED_LEVEL_LOW),
+      currentStrategy(STRATEGY_STING)
 {
 }
 
@@ -136,36 +137,21 @@ void Robot::updateBehavior()
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
-    // NEW VERSION v2 - Handles sensor intersection overlaps
-    // The left/center and right/center sensors sometimes overlap due to physical placement
-    // Using reduced PWM for turns when intersections occur prevents jitter
+    // NEW VERSION v2 - CENTER PRIORITY strategy
+    // Handles sensor intersection overlaps by prioritizing CENTER sensor
+    // When CENTER detects, ignore LEFT/RIGHT to prevent jitter
 
-    // ALL sensors detect target -> FULL SPEED PUSH
-    if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 1)
+    // CENTER sensor detected (regardless of LEFT/RIGHT) -> DIRECT ATTACK at full speed
+    if (irValues[1] == 1)
     {
         motor.forward(speedConfig.attack_speed);
     }
-    // LEFT + CENTER intersection -> GENTLE LEFT TURN (reduced speed to prevent jitter)
-    else if (irValues[0] == 1 && irValues[1] == 1)
-    {
-        motor.left(speedConfig.turn_speed_moderate);
-    }
-    // RIGHT + CENTER intersection -> GENTLE RIGHT TURN (reduced speed to prevent jitter)
-    else if (irValues[2] == 1 && irValues[1] == 1)
-    {
-        motor.right(speedConfig.turn_speed_moderate);
-    }
-    // CENTER sensor only -> DIRECT ATTACK
-    else if (irValues[1] == 1)
-    {
-        motor.forward(speedConfig.attack_speed);
-    }
-    // LEFT sensor only -> AGGRESSIVE LEFT TURN
+    // LEFT sensor only (CENTER not detecting) -> TURN LEFT + FORWARD
     else if (irValues[0] == 1)
     {
         motor.left(speedConfig.attack_speed);
     }
-    // RIGHT sensor only -> AGGRESSIVE RIGHT TURN
+    // RIGHT sensor only (CENTER not detecting) -> TURN RIGHT + FORWARD
     else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
@@ -190,10 +176,14 @@ void Robot::handleButtonGesture(ButtonGesture gesture)
         break;
 
     case GESTURE_DOUBLE_PRESS:
-        // Double press: cycle speed presets (only on speed screen)
+        // Double press: cycle speed presets (only on speed screen) or strategies (on strategy screen)
         if (currentMenuScreen == MENU_SCREEN_SPEED)
         {
             cycleSpeedLevel();
+        }
+        else if (currentMenuScreen == MENU_SCREEN_STRATEGY)
+        {
+            cycleStrategy();
         }
         break;
 

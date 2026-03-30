@@ -71,6 +71,19 @@ public:
         setSpeedLevel((currentSpeedLevel + 1) % SPEED_LEVEL_COUNT);
     }
 
+    int getCurrentStrategy() const { return currentStrategy; }
+    void setStrategy(int strategy)
+    {
+        if (strategy >= 0 && strategy < STRATEGY_COUNT)
+        {
+            currentStrategy = strategy;
+        }
+    }
+    void cycleStrategy()
+    {
+        setStrategy((currentStrategy + 1) % STRATEGY_COUNT);
+    }
+
     // Handle button gesture input
     void handleButtonGesture(ButtonGesture gesture);
 
@@ -84,6 +97,7 @@ private:
     int currentMenuScreen;
     bool paused;
     int currentSpeedLevel;
+    int currentStrategy;
 
     // Decision-making: read sensors and command motors
     void updateBehavior();
