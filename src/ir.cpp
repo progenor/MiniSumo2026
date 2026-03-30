@@ -2,10 +2,12 @@
 
 IRSensors::IRSensors()
 {
-  // Initialize sensor values to zero
+  // Initialize sensor values and debounce counters to zero
   for (int i = 0; i < IRCount; i++)
   {
     sensorValues[i] = 0;
+    rawValues[i] = 0;
+    debounceCounter[i] = 0;
   }
 }
 
@@ -16,10 +18,34 @@ void IRSensors::setup()
 
 void IRSensors::read()
 {
-  // Read values from IR sensors
+  // Read raw values from IR sensors with debounce filtering
+  // Debounce Filter: Requires DEBOUNCE_THRESHOLD consecutive stable readings
+  // before accepting a state change. This filters out transient spikes from
+  // ground bounce during fast turns and other noise.
+
   for (int i = 0; i < IRCount; i++)
   {
-    sensorValues[i] = digitalRead(IRPins[i]);
+    int rawRead = digitalRead(IRPins[i]);
+    rawValues[i] = rawRead;
+
+    // Check if raw reading matches current filtered value
+    if (rawRead == sensorValues[i])
+    {
+      // Stable state - reset debounce counter
+      debounceCounter[i] = 0;
+    }
+    else
+    {
+      // State change detected - increment debounce counter
+      debounceCounter[i]++;
+
+      // Accept state change only after threshold is reached
+      if (debounceCounter[i] >= DEBOUNCE_THRESHOLD)
+      {
+        sensorValues[i] = rawRead; // Update filtered value
+        debounceCounter[i] = 0;    // Reset counter
+      }
+    }
   }
 }
 

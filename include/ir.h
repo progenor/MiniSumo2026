@@ -5,8 +5,9 @@
 #include "Arduino.h"
 #include "pins.h"
 
-#define IRCount 3 // Number of IR sensors
-//extern const uint8_t IRPins[];
+#define IRCount 3            // Number of IR sensors
+#define DEBOUNCE_THRESHOLD 3 // Number of consecutive stable readings required to accept state change
+// extern const uint8_t IRPins[];
 
 class IRSensors
 {
@@ -15,7 +16,7 @@ public:
 
   void setup();
 
-  void read();
+  void read(); // Reads raw sensors and applies debounce filtering
 
   int getValue(int index);
 
@@ -24,7 +25,9 @@ public:
   void printAllValues();
 
 private:
-  int sensorValues[IRCount];
+  int sensorValues[IRCount];    // Filtered sensor values
+  int rawValues[IRCount];       // Raw unfiltered sensor values
+  int debounceCounter[IRCount]; // Debounce counter for each sensor
 };
 
 #endif
