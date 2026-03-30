@@ -8,7 +8,8 @@
 #define MENU_SCREEN_PEAK_CURRENT 3
 #define MENU_SCREEN_IR 4
 #define MENU_SCREEN_STRATEGY 5
-#define MENU_SCREEN_COUNT 6
+#define MENU_SCREEN_DIRECTION 6
+#define MENU_SCREEN_COUNT 7
 
 // Robot mode enumeration
 enum RobotMode
@@ -52,6 +53,16 @@ enum Strategy
     STRATEGY_SPEED = 1,
     STRATEGY_RUN = 2,
     STRATEGY_COUNT = 3
+};
+
+// Motor direction enumeration
+enum MotorDirection
+{
+    DIRECTION_FORWARD = 0,
+    DIRECTION_BACKWARD = 1,
+    DIRECTION_LEFT = 2,
+    DIRECTION_RIGHT = 3,
+    DIRECTION_STOP = 4
 };
 
 #endif // MENU_H

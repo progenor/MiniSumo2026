@@ -84,6 +84,8 @@ public:
         setStrategy((currentStrategy + 1) % STRATEGY_COUNT);
     }
 
+    int getCurrentDirection() const { return currentMotorDirection; }
+
     // Handle button gesture input
     void handleButtonGesture(ButtonGesture gesture);
 
@@ -98,6 +100,7 @@ private:
     bool paused;
     int currentSpeedLevel;
     int currentStrategy;
+    int currentMotorDirection;
 
     // Decision-making: read sensors and command motors
     void updateBehavior();

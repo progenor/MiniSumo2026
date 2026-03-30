@@ -8,7 +8,8 @@ Robot::Robot()
       currentMenuScreen(MENU_SCREEN_MAIN),
       paused(false),
       currentSpeedLevel(SPEED_LEVEL_LOW),
-      currentStrategy(STRATEGY_STING)
+      currentStrategy(STRATEGY_STING),
+      currentMotorDirection(DIRECTION_STOP)
 {
 }
 
@@ -132,6 +133,7 @@ void Robot::updateBehavior_Speed()
     if (paused)
     {
         motor.stop();
+        currentMotorDirection = DIRECTION_STOP;
         return;
     }
 
@@ -143,26 +145,31 @@ void Robot::updateBehavior_Speed()
     if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 1)
     {
         motor.forward(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_FORWARD;
     }
     // CENTER sensor detects -> DIRECT ATTACK
     else if (irValues[1] == 1)
     {
         motor.forward(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_FORWARD;
     }
     // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
     else if (irValues[0] == 1)
     {
         motor.left(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_LEFT;
     }
     // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
     else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_RIGHT;
     }
     // NO sensors detect -> SEARCH by spinning in place
     else
     {
         motor.right(speedConfig.search_speed);
+        currentMotorDirection = DIRECTION_RIGHT;
     }
 }
 // ===== END SPEED STRATEGY =====
@@ -175,6 +182,7 @@ void Robot::updateBehavior_Sting()
     if (paused)
     {
         motor.stop();
+        currentMotorDirection = DIRECTION_STOP;
         return;
     }
 
@@ -186,21 +194,25 @@ void Robot::updateBehavior_Sting()
     if (irValues[1] == 1)
     {
         motor.forward(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_FORWARD;
     }
     // LEFT sensor only (CENTER not detecting) -> TURN LEFT + FORWARD
     else if (irValues[0] == 1)
     {
         motor.left(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_LEFT;
     }
     // RIGHT sensor only (CENTER not detecting) -> TURN RIGHT + FORWARD
     else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_RIGHT;
     }
     // NO sensors detect -> SEARCH by spinning in place
     else
     {
         motor.right(speedConfig.search_speed);
+        currentMotorDirection = DIRECTION_RIGHT;
     }
 }
 // ===== END STING STRATEGY =====
@@ -214,6 +226,7 @@ void Robot::updateBehavior_Run()
     if (paused)
     {
         motor.stop();
+        currentMotorDirection = DIRECTION_STOP;
         return;
     }
 
@@ -225,21 +238,25 @@ void Robot::updateBehavior_Run()
     if (irValues[1] == 1)
     {
         motor.backward(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_BACKWARD;
     }
     // LEFT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
     else if (irValues[0] == 1)
     {
         motor.right(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_RIGHT;
     }
     // RIGHT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
     else if (irValues[2] == 1)
     {
         motor.left(speedConfig.attack_speed);
+        currentMotorDirection = DIRECTION_LEFT;
     }
     // NO sensors detect -> SEARCH by spinning backward
     else
     {
         motor.left(speedConfig.search_speed);
+        currentMotorDirection = DIRECTION_LEFT;
     }
 }
 // ===== END RUN STRATEGY =====

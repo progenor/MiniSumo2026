@@ -77,6 +77,10 @@ void loop()
             robot.getDisplay().drawStrategySelectorScreen(robot.getCurrentStrategy());
             break;
 
+        case MENU_SCREEN_DIRECTION:
+            robot.getDisplay().drawDirectionIndicatorScreen(robot.getCurrentDirection());
+            break;
+
         default:
             robot.getDisplay().drawMainScreen();
             break;
