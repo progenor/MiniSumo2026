@@ -79,52 +79,6 @@ void Robot::update()
     }
 }
 
-// ===== OLD VERSION v1 - COMMENTED OUT =====
-// This was the original strategy that caused jitter at sensor intersections
-// Kept for reference/debugging
-/*
-void Robot::updateBehavior_OLD_v1()
-{
-    // Don't execute motor commands if paused
-    if (paused)
-    {
-        motor.stop();
-        return;
-    }
-
-    // Get current IR sensor readings
-    int *irValues = irSensors.getAllValues();
-    // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
-
-    // ALL sensors detect target -> FULL SPEED PUSH
-    if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 1)
-    {
-        motor.forward(speedConfig.attack_speed);
-    }
-    // CENTER sensor detects -> DIRECT ATTACK
-    else if (irValues[1] == 1)
-    {
-        motor.forward(speedConfig.attack_speed);
-    }
-    // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
-    else if (irValues[0] == 1)
-    {
-        motor.left(speedConfig.attack_speed);
-    }
-    // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
-    else if (irValues[2] == 1)
-    {
-        motor.right(speedConfig.attack_speed);
-    }
-    // NO sensors detect -> SEARCH by spinning in place
-    else
-    {
-        motor.right(speedConfig.search_speed);
-    }
-}
-*/
-// ===== END OLD VERSION v1 =====
-
 // ===== SPEED STRATEGY =====
 // Original strategy with all sensor detection
 void Robot::updateBehavior_Speed()
@@ -327,4 +281,107 @@ void Robot::applySpeedPreset(int level)
         speedConfig.turn_speed_moderate = preset.turn_moderate;
         speedConfig.turn_speed_gentle = preset.turn_gentle;
     }
+}
+
+// ===== GETTER AND SETTER IMPLEMENTATIONS =====
+
+SpeedConfig &Robot::getSpeedConfig()
+{
+    return speedConfig;
+}
+
+int *Robot::getIRValues()
+{
+    return irSensors.getAllValues();
+}
+
+Display &Robot::getDisplay()
+{
+    return display;
+}
+
+Motor &Robot::getMotor()
+{
+    return motor;
+}
+
+RobotMode Robot::getMode() const
+{
+    return currentMode;
+}
+
+void Robot::setMode(RobotMode mode)
+{
+    currentMode = mode;
+}
+
+int Robot::getCurrentMenuScreen() const
+{
+    return currentMenuScreen;
+}
+
+void Robot::setCurrentMenuScreen(int screen)
+{
+    currentMenuScreen = screen % MENU_SCREEN_COUNT;
+}
+
+void Robot::cycleMenuScreen()
+{
+    currentMenuScreen = (currentMenuScreen + 1) % MENU_SCREEN_COUNT;
+}
+
+bool Robot::isPaused() const
+{
+    return paused;
+}
+
+void Robot::togglePause()
+{
+    paused = !paused;
+    if (paused)
+    {
+        motor.stop();
+    }
+}
+
+int Robot::getCurrentSpeedLevel() const
+{
+    return currentSpeedLevel;
+}
+
+void Robot::setSpeedLevel(int level)
+{
+    if (level >= 0 && level < SPEED_LEVEL_COUNT)
+    {
+        currentSpeedLevel = level;
+        applySpeedPreset(level);
+    }
+}
+
+void Robot::cycleSpeedLevel()
+{
+    setSpeedLevel((currentSpeedLevel + 1) % SPEED_LEVEL_COUNT);
+}
+
+int Robot::getCurrentStrategy() const
+{
+    return currentStrategy;
+}
+
+void Robot::setStrategy(int strategy)
+{
+    if (strategy >= 0 && strategy < STRATEGY_COUNT)
+    {
+        currentStrategy = strategy;
+    }
+}
+
+void Robot::cycleStrategy()
+{
+    setStrategy((currentStrategy + 1) % STRATEGY_COUNT);
+}
+
+int Robot::getCurrentDirection() const
+{
+    return currentMotorDirection;
 }

@@ -22,69 +22,37 @@ public:
     void update();
 
     // Allow external menu to update speed config
-    SpeedConfig &getSpeedConfig() { return speedConfig; }
+    SpeedConfig &getSpeedConfig();
 
     // Get sensor readings (for menu display or debugging)
-    int *getIRValues() { return irSensors.getAllValues(); }
+    int *getIRValues();
 
     // Get display for menu screen rendering
-    Display &getDisplay() { return display; }
+    Display &getDisplay();
 
     // Get motor for sensor readings
-    Motor &getMotor() { return motor; }
+    Motor &getMotor();
 
     // Menu and state management
-    RobotMode getMode() const { return currentMode; }
-    void setMode(RobotMode mode) { currentMode = mode; }
+    RobotMode getMode() const;
+    void setMode(RobotMode mode);
 
-    int getCurrentMenuScreen() const { return currentMenuScreen; }
-    void setCurrentMenuScreen(int screen)
-    {
-        currentMenuScreen = screen % MENU_SCREEN_COUNT;
-    }
-    void cycleMenuScreen()
-    {
-        currentMenuScreen = (currentMenuScreen + 1) % MENU_SCREEN_COUNT;
-    }
+    int getCurrentMenuScreen() const;
+    void setCurrentMenuScreen(int screen);
+    void cycleMenuScreen();
 
-    bool isPaused() const { return paused; }
-    void togglePause()
-    {
-        paused = !paused;
-        if (paused)
-        {
-            motor.stop();
-        }
-    }
+    bool isPaused() const;
+    void togglePause();
 
-    int getCurrentSpeedLevel() const { return currentSpeedLevel; }
-    void setSpeedLevel(int level)
-    {
-        if (level >= 0 && level < SPEED_LEVEL_COUNT)
-        {
-            currentSpeedLevel = level;
-            applySpeedPreset(level);
-        }
-    }
-    void cycleSpeedLevel()
-    {
-        setSpeedLevel((currentSpeedLevel + 1) % SPEED_LEVEL_COUNT);
-    }
+    int getCurrentSpeedLevel() const;
+    void setSpeedLevel(int level);
+    void cycleSpeedLevel();
 
-    int getCurrentStrategy() const { return currentStrategy; }
-    void setStrategy(int strategy)
-    {
-        if (strategy >= 0 && strategy < STRATEGY_COUNT)
-        {
-            currentStrategy = strategy;
-        }
-    }
-    void cycleStrategy()
-    {
-        setStrategy((currentStrategy + 1) % STRATEGY_COUNT);
-    }
+    int getCurrentStrategy() const;
+    void setStrategy(int strategy);
+    void cycleStrategy();
 
-    int getCurrentDirection() const { return currentMotorDirection; }
+    int getCurrentDirection() const;
 
     // Handle button gesture input
     void handleButtonGesture(ButtonGesture gesture);
