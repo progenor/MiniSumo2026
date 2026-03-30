@@ -124,7 +124,9 @@ void Robot::updateBehavior_OLD_v1()
 */
 // ===== END OLD VERSION v1 =====
 
-void Robot::updateBehavior()
+// ===== SPEED STRATEGY =====
+// Original strategy with all sensor detection
+void Robot::updateBehavior_Speed()
 {
     // Don't execute motor commands if paused
     if (paused)
@@ -137,9 +139,48 @@ void Robot::updateBehavior()
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
-    // NEW VERSION v2 - CENTER PRIORITY strategy
-    // Handles sensor intersection overlaps by prioritizing CENTER sensor
-    // When CENTER detects, ignore LEFT/RIGHT to prevent jitter
+    // ALL sensors detect target -> FULL SPEED PUSH
+    if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 1)
+    {
+        motor.forward(speedConfig.attack_speed);
+    }
+    // CENTER sensor detects -> DIRECT ATTACK
+    else if (irValues[1] == 1)
+    {
+        motor.forward(speedConfig.attack_speed);
+    }
+    // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
+    else if (irValues[0] == 1)
+    {
+        motor.left(speedConfig.attack_speed);
+    }
+    // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
+    else if (irValues[2] == 1)
+    {
+        motor.right(speedConfig.attack_speed);
+    }
+    // NO sensors detect -> SEARCH by spinning in place
+    else
+    {
+        motor.right(speedConfig.search_speed);
+    }
+}
+// ===== END SPEED STRATEGY =====
+
+// ===== STING STRATEGY =====
+// CENTER PRIORITY strategy - handles sensor intersections by prioritizing CENTER sensor
+void Robot::updateBehavior_Sting()
+{
+    // Don't execute motor commands if paused
+    if (paused)
+    {
+        motor.stop();
+        return;
+    }
+
+    // Get current IR sensor readings
+    int *irValues = irSensors.getAllValues();
+    // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
     // CENTER sensor detected (regardless of LEFT/RIGHT) -> DIRECT ATTACK at full speed
     if (irValues[1] == 1)
@@ -160,6 +201,66 @@ void Robot::updateBehavior()
     else
     {
         motor.right(speedConfig.search_speed);
+    }
+}
+// ===== END STING STRATEGY =====
+
+// ===== RUN STRATEGY =====
+// Retreat/Reverse strategy - does the opposite
+// If sensors detect, goes BACKWARD instead of forward
+void Robot::updateBehavior_Run()
+{
+    // Don't execute motor commands if paused
+    if (paused)
+    {
+        motor.stop();
+        return;
+    }
+
+    // Get current IR sensor readings
+    int *irValues = irSensors.getAllValues();
+    // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
+
+    // CENTER sensor detected -> RETREAT BACKWARD
+    if (irValues[1] == 1)
+    {
+        motor.backward(speedConfig.attack_speed);
+    }
+    // LEFT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
+    else if (irValues[0] == 1)
+    {
+        motor.right(speedConfig.attack_speed);
+    }
+    // RIGHT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
+    else if (irValues[2] == 1)
+    {
+        motor.left(speedConfig.attack_speed);
+    }
+    // NO sensors detect -> SEARCH by spinning backward
+    else
+    {
+        motor.left(speedConfig.search_speed);
+    }
+}
+// ===== END RUN STRATEGY =====
+
+// Strategy dispatcher
+void Robot::updateBehavior()
+{
+    switch (currentStrategy)
+    {
+    case STRATEGY_STING:
+        updateBehavior_Sting();
+        break;
+    case STRATEGY_SPEED:
+        updateBehavior_Speed();
+        break;
+    case STRATEGY_RUN:
+        updateBehavior_Run();
+        break;
+    default:
+        updateBehavior_Sting();
+        break;
     }
 }
 
