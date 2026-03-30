@@ -6,9 +6,16 @@ const float R_IPROPI = 1000.0; // Resistor value in Ohms (1kΩ)
 const float A_IPROPI = 3075.0; // Datasheet scaling factor
 const float V_REF = 3.3;       // Pico reference voltage
 
+// Alpha filter coefficient for current smoothing
+const float Motor::ALPHA_FILTER = 0.97; // 3% new value, 97% previous (very strong smoothing/low-pass filter)
+
 Motor::Motor()
 {
     // Constructor - pins will be initialized in setup()
+    filteredCurrent_A = 0.0f;
+    filteredCurrent_B = 0.0f;
+    isFirstRead_A = true;
+    isFirstRead_B = true;
 }
 
 void Motor::setup()
@@ -121,4 +128,46 @@ float Motor::readMotorBCurrent()
     float currentAmps = (voltage / R_IPROPI) * A_IPROPI;
 
     return currentAmps; // Return current in Amps
+}
+
+float Motor::getFilteredMotorCurrent()
+{
+    // Get raw current reading for motor A
+    float rawCurrent = readMotorCurrent();
+
+    // On first read, initialize filtered value with raw value
+    if (isFirstRead_A)
+    {
+        filteredCurrent_A = rawCurrent;
+        isFirstRead_A = false;
+        return filteredCurrent_A;
+    }
+
+    // Apply exponential moving average (alpha filter)
+    // Formula: filtered = (ALPHA * rawValue) + ((1 - ALPHA) * previousFiltered)
+    // With ALPHA=0.25: 25% new value, 75% previous (strong smoothing)
+    filteredCurrent_A = (ALPHA_FILTER * rawCurrent) + ((1.0f - ALPHA_FILTER) * filteredCurrent_A);
+
+    return filteredCurrent_A;
+}
+
+float Motor::getFilteredMotorBCurrent()
+{
+    // Get raw current reading for motor B
+    float rawCurrent = readMotorBCurrent();
+
+    // On first read, initialize filtered value with raw value
+    if (isFirstRead_B)
+    {
+        filteredCurrent_B = rawCurrent;
+        isFirstRead_B = false;
+        return filteredCurrent_B;
+    }
+
+    // Apply exponential moving average (alpha filter)
+    // Formula: filtered = (ALPHA * rawValue) + ((1 - ALPHA) * previousFiltered)
+    // With ALPHA=0.25: 25% new value, 75% previous (strong smoothing)
+    filteredCurrent_B = (ALPHA_FILTER * rawCurrent) + ((1.0f - ALPHA_FILTER) * filteredCurrent_B);
+
+    return filteredCurrent_B;
 }

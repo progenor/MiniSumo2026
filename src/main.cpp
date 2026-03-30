@@ -53,10 +53,10 @@ void loop()
 
         case MENU_SCREEN_CURRENT:
         {
-            // Format current readings as strings
+            // Format filtered current readings as strings
             char motorA_str[10], motorB_str[10];
-            snprintf(motorA_str, sizeof(motorA_str), "%.2f", robot.getMotor().readMotorCurrent());
-            snprintf(motorB_str, sizeof(motorB_str), "%.2f", robot.getMotor().readMotorBCurrent());
+            snprintf(motorA_str, sizeof(motorA_str), "%.2f", robot.getMotor().getFilteredMotorCurrent());
+            snprintf(motorB_str, sizeof(motorB_str), "%.2f", robot.getMotor().getFilteredMotorBCurrent());
             robot.getDisplay().drawCurentReading(motorA_str, motorB_str);
             break;
         }

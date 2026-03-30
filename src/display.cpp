@@ -133,7 +133,6 @@ void Display::drawCurentReading(const char *MotorA_current = "NAN",
     // Layer 5
     display.setCursor(55, 9);
     display.print(MotorB_current);
-
     // Layer 5 copy 1
     display.setCursor(56, 41);
     display.print(MotorA_current);
