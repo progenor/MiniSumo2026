@@ -55,6 +55,9 @@ void Robot::update()
     // Read all sensors
     irSensors.read();
 
+    // Update motor PWM ramping (smooth acceleration to reduce current peaks)
+    motor.updateMotorRamp();
+
     // Update motor peak current tracking
     motor.updatePeaks();
 

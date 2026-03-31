@@ -9,6 +9,10 @@ const float V_REF = 3.3;       // Pico reference voltage
 // Alpha filter coefficient for current smoothing
 const float Motor::ALPHA_FILTER = 0.97; // 3% new value, 97% previous (very strong smoothing/low-pass filter)
 
+// PWM ramping configuration
+const int Motor::RAMP_DURATION_MS = 300; // Smooth acceleration over 300ms
+const int Motor::DELTA_THRESHOLD = 40;   // Only ramp if PWM change exceeds 70
+
 Motor::Motor()
 {
     // Constructor - pins will be initialized in setup()
@@ -18,6 +22,14 @@ Motor::Motor()
     isFirstRead_B = true;
     peakCurrent_A = 0.0f;
     peakCurrent_B = 0.0f;
+
+    // Initialize PWM ramping state
+    rampStartTime = 0;
+    pwmA_current = 0;
+    pwmA_target = 0;
+    pwmB_current = 0;
+    pwmB_target = 0;
+    isRamping = false;
 }
 
 void Motor::setup()
@@ -60,38 +72,134 @@ void Motor::initDRV8243()
 
 void Motor::backward(int pwm)
 {
-    analogWrite(PWM_A1, pwm); // Motor A forward
-    digitalWrite(PWM_A2, LOW);
+    int pwmDeltaA = abs(pwm - pwmA_current);
+    int pwmDeltaB = abs(pwm - pwmB_current);
 
-    analogWrite(PWM_B1, pwm); // Motor B forward
-    digitalWrite(PWM_B2, LOW);
+    if (pwmDeltaA > DELTA_THRESHOLD || pwmDeltaB > DELTA_THRESHOLD)
+    {
+        // Large change: initiate ramp
+        pwmA_target = pwm;
+        pwmB_target = pwm;
+        rampStartTime = millis();
+        isRamping = true;
+    }
+    else
+    {
+        // Small change: apply directly
+        pwmA_current = pwm;
+        pwmB_current = pwm;
+        isRamping = false;
+
+        analogWrite(PWM_A1, pwm); // Motor A forward
+        digitalWrite(PWM_A2, LOW);
+
+        analogWrite(PWM_B1, pwm); // Motor B forward
+        digitalWrite(PWM_B2, LOW);
+    }
 }
 
 void Motor::forward(int pwm)
 {
-    digitalWrite(PWM_A1, LOW);
-    analogWrite(PWM_A2, pwm); // Motor A reverse
+    int pwmDeltaA = abs(pwm - pwmA_current);
+    int pwmDeltaB = abs(pwm - pwmB_current);
 
-    digitalWrite(PWM_B1, LOW);
-    analogWrite(PWM_B2, pwm); // Motor B reverse
+    if (pwmDeltaA > DELTA_THRESHOLD || pwmDeltaB > DELTA_THRESHOLD)
+    {
+        // Large change: initiate ramp
+        pwmA_target = pwm;
+        pwmB_target = pwm;
+        rampStartTime = millis();
+        isRamping = true;
+
+        // Update target direction pins immediately
+        digitalWrite(PWM_A1, LOW);
+        digitalWrite(PWM_A2, HIGH); // Will write actual PWM on next ramp update
+        digitalWrite(PWM_B1, LOW);
+        digitalWrite(PWM_B2, HIGH); // Will write actual PWM on next ramp update
+    }
+    else
+    {
+        // Small change: apply directly
+        pwmA_current = pwm;
+        pwmB_current = pwm;
+        isRamping = false;
+
+        digitalWrite(PWM_A1, LOW);
+        analogWrite(PWM_A2, pwm); // Motor A reverse
+
+        digitalWrite(PWM_B1, LOW);
+        analogWrite(PWM_B2, pwm); // Motor B reverse
+    }
 }
 
 void Motor::right(int pwm)
 {
-    analogWrite(PWM_A1, pwm); // Motor A forward
-    digitalWrite(PWM_A2, LOW);
+    int pwmDeltaA = abs(pwm - pwmA_current);
+    int pwmDeltaB = abs(pwm - pwmB_current);
 
-    digitalWrite(PWM_B1, LOW);
-    analogWrite(PWM_B2, pwm); // Motor B reverse
+    if (pwmDeltaA > DELTA_THRESHOLD || pwmDeltaB > DELTA_THRESHOLD)
+    {
+        // Large change: initiate ramp
+        pwmA_target = pwm;
+        pwmB_target = pwm;
+        rampStartTime = millis();
+        isRamping = true;
+
+        // Update target direction pins immediately
+        analogWrite(PWM_A1, 0); // Will write actual PWM on next ramp update
+        digitalWrite(PWM_A2, LOW);
+
+        digitalWrite(PWM_B1, LOW);
+        analogWrite(PWM_B2, 0); // Will write actual PWM on next ramp update
+    }
+    else
+    {
+        // Small change: apply directly
+        pwmA_current = pwm;
+        pwmB_current = pwm;
+        isRamping = false;
+
+        analogWrite(PWM_A1, pwm); // Motor A forward
+        digitalWrite(PWM_A2, LOW);
+
+        digitalWrite(PWM_B1, LOW);
+        analogWrite(PWM_B2, pwm); // Motor B reverse
+    }
 }
 
 void Motor::left(int pwm)
 {
-    digitalWrite(PWM_A1, LOW);
-    analogWrite(PWM_A2, pwm); // Motor A reverse
+    int pwmDeltaA = abs(pwm - pwmA_current);
+    int pwmDeltaB = abs(pwm - pwmB_current);
 
-    analogWrite(PWM_B1, pwm); // Motor B forward
-    digitalWrite(PWM_B2, LOW);
+    if (pwmDeltaA > DELTA_THRESHOLD || pwmDeltaB > DELTA_THRESHOLD)
+    {
+        // Large change: initiate ramp
+        pwmA_target = pwm;
+        pwmB_target = pwm;
+        rampStartTime = millis();
+        isRamping = true;
+
+        // Update target direction pins immediately
+        digitalWrite(PWM_A1, LOW);
+        analogWrite(PWM_A2, 0); // Will write actual PWM on next ramp update
+
+        analogWrite(PWM_B1, 0); // Will write actual PWM on next ramp update
+        digitalWrite(PWM_B2, LOW);
+    }
+    else
+    {
+        // Small change: apply directly
+        pwmA_current = pwm;
+        pwmB_current = pwm;
+        isRamping = false;
+
+        digitalWrite(PWM_A1, LOW);
+        analogWrite(PWM_A2, pwm); // Motor A reverse
+
+        analogWrite(PWM_B1, pwm); // Motor B forward
+        digitalWrite(PWM_B2, LOW);
+    }
 }
 
 void Motor::stop()
@@ -100,6 +208,79 @@ void Motor::stop()
     digitalWrite(PWM_A2, LOW);
     digitalWrite(PWM_B1, LOW);
     digitalWrite(PWM_B2, LOW);
+
+    // Stop ramping immediately
+    isRamping = false;
+    pwmA_current = 0;
+    pwmB_current = 0;
+    pwmA_target = 0;
+    pwmB_target = 0;
+}
+
+void Motor::updateMotorRamp()
+{
+    // Only process if actively ramping
+    if (!isRamping)
+    {
+        return;
+    }
+
+    // Calculate elapsed time since ramp start
+    unsigned long elapsed = millis() - rampStartTime;
+
+    // If ramp duration exceeded, finalize the ramp
+    if (elapsed >= RAMP_DURATION_MS)
+    {
+        pwmA_current = pwmA_target;
+        pwmB_current = pwmB_target;
+        isRamping = false;
+        applyRampedPWM(pwmA_current, pwmB_current);
+        return;
+    }
+
+    // Calculate progress (0.0 to 1.0)
+    float progress = (float)elapsed / RAMP_DURATION_MS;
+
+    // Apply exponential easing: smoother than linear, natural acceleration feel
+    // Formula: current = start + (target - start) * (1 - exp(-3 * progress))
+    // This creates an ease-in curve that feels natural
+    float easingFactor = 1.0f - expf(-3.0f * progress);
+
+    // Interpolate motor A PWM
+    pwmA_current = (int)(pwmA_target * easingFactor);
+
+    // Interpolate motor B PWM
+    pwmB_current = (int)(pwmB_target * easingFactor);
+
+    // Apply the interpolated PWM values to the motors
+    applyRampedPWM(pwmA_current, pwmB_current);
+}
+
+void Motor::applyRampedPWM(int currentA, int currentB)
+{
+    // Apply the ramped PWM values to the motor pins
+    // Direction is already set by the motor control method (forward/backward/left/right)
+    // We just need to update the PWM value on whichever pin is active for each motor
+
+    // Motor A: determine which pin is active and update its PWM
+    if (digitalRead(PWM_A1) == HIGH)
+    {
+        analogWrite(PWM_A1, currentA);
+    }
+    else
+    {
+        analogWrite(PWM_A2, currentA);
+    }
+
+    // Motor B: determine which pin is active and update its PWM
+    if (digitalRead(PWM_B1) == HIGH)
+    {
+        analogWrite(PWM_B1, currentB);
+    }
+    else
+    {
+        analogWrite(PWM_B2, currentB);
+    }
 }
 
 float Motor::readMotorCurrent()
