@@ -20,8 +20,8 @@
 
 // IR Sensor Pins
 #define SENSOR_LEFT 12
-#define SENSOR_CENTER 13
-#define SENSOR_RIGHT 14
+#define SENSOR_CENTER 11
+#define SENSOR_RIGHT 10
 
 // QTR Sensor Pins
 #define QTR_LEFT 10

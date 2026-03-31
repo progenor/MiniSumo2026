@@ -5,7 +5,7 @@ SpeedConfig speedConfig;
 
 Robot::Robot()
     : currentMode(MODE_MENU),
-      currentMenuScreen(MENU_SCREEN_MAIN),
+      currentMenuScreen(MENU_SCREEN_IR),
       paused(false),
       currentSpeedLevel(SPEED_LEVEL_LOW),
       currentStrategy(STRATEGY_STING),
