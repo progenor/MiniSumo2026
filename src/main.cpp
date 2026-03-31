@@ -78,7 +78,9 @@ void loop()
             break;
 
         case MENU_SCREEN_DIRECTION:
-            robot.getDisplay().drawDirectionIndicatorScreen(robot.getCurrentDirection());
+            robot.getDisplay().drawDirectionIndicatorScreen(robot.getCurrentDirection(),
+                                                            robot.getMotor().getPWM_A_Current(),
+                                                            robot.getMotor().getPWM_B_Current());
             break;
 
         default:

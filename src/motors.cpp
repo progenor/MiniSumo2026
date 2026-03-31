@@ -82,6 +82,12 @@ void Motor::backward(int pwm)
         pwmB_target = pwm;
         rampStartTime = millis();
         isRamping = true;
+
+        // Update target direction pins immediately
+        digitalWrite(PWM_A1, HIGH);
+        digitalWrite(PWM_A2, LOW);
+        digitalWrite(PWM_B1, HIGH);
+        digitalWrite(PWM_B2, LOW);
     }
     else
     {
@@ -146,11 +152,11 @@ void Motor::right(int pwm)
         isRamping = true;
 
         // Update target direction pins immediately
-        analogWrite(PWM_A1, 0); // Will write actual PWM on next ramp update
+        digitalWrite(PWM_A1, HIGH); // Will write actual PWM on next ramp update
         digitalWrite(PWM_A2, LOW);
 
         digitalWrite(PWM_B1, LOW);
-        analogWrite(PWM_B2, 0); // Will write actual PWM on next ramp update
+        digitalWrite(PWM_B2, HIGH); // Will write actual PWM on next ramp update
     }
     else
     {
@@ -182,9 +188,9 @@ void Motor::left(int pwm)
 
         // Update target direction pins immediately
         digitalWrite(PWM_A1, LOW);
-        analogWrite(PWM_A2, 0); // Will write actual PWM on next ramp update
+        digitalWrite(PWM_A2, HIGH); // Will write actual PWM on next ramp update
 
-        analogWrite(PWM_B1, 0); // Will write actual PWM on next ramp update
+        digitalWrite(PWM_B1, HIGH); // Will write actual PWM on next ramp update
         digitalWrite(PWM_B2, LOW);
     }
     else
@@ -391,4 +397,14 @@ void Motor::resetPeaks()
 {
     peakCurrent_A = 0.0f;
     peakCurrent_B = 0.0f;
+}
+
+int Motor::getPWM_A_Current() const
+{
+    return pwmA_current;
+}
+
+int Motor::getPWM_B_Current() const
+{
+    return pwmB_current;
 }

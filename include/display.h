@@ -53,7 +53,7 @@ public:
     void drawSensorReadingsScreen(int *irValues, int irCount);
     void drawStatusScreen(RobotMode mode, bool isPaused, int currentScreen);
     void drawStrategySelectorScreen(int currentStrategy);
-    void drawDirectionIndicatorScreen(int motorDirection);
+    void drawDirectionIndicatorScreen(int motorDirection, int pwmA = 0, int pwmB = 0);
 
 private:
     Adafruit_SSD1306 display;

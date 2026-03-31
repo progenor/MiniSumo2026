@@ -20,7 +20,9 @@ public:
     void stop();
 
     // PWM ramping methods (smooth acceleration to reduce current peaks)
-    void updateMotorRamp(); // Call this from main loop to advance PWM ramping
+    void updateMotorRamp();       // Call this from main loop to advance PWM ramping
+    int getPWM_A_Current() const; // Returns current PWM value for motor A
+    int getPWM_B_Current() const; // Returns current PWM value for motor B
 
     // Current sensing methods
     float readMotorCurrent();  // Returns motor A current in Amps
