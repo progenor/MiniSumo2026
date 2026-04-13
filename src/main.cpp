@@ -13,6 +13,7 @@ ButtonManager buttonManager;
 void setup()
 {
     robot.setup();
+    buttonManager.setup();
 }
 
 void loop()

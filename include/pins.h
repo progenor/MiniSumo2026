@@ -19,9 +19,9 @@
 #define IPROPI_B_PIN 27 // GP27 ADC input for motor B current sensing
 
 // IR Sensor Pins
-#define SENSOR_LEFT 12
-#define SENSOR_CENTER 11
-#define SENSOR_RIGHT 10
+#define SENSOR_LEFT 13
+#define SENSOR_CENTER 14
+#define SENSOR_RIGHT 12
 
 // QTR Sensor Pins
 #define QTR_LEFT 10

@@ -40,7 +40,7 @@ struct SpeedPreset
 // Preset configurations
 static const SpeedPreset SPEED_PRESETS[SPEED_LEVEL_COUNT] = {
     // LOW
-    {150, 80, 20, 10},
+    {128, 80, 20, 10},
     // MEDIUM
     {200, 120, 25, 15},
     // HIGH

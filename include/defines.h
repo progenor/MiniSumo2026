@@ -20,8 +20,8 @@ struct SpeedConfig
 
     // Constructor with defaults
     SpeedConfig()
-        : attack_speed(250),
-          search_speed(128),
+        : attack_speed(128),
+          search_speed(64),
           turn_speed_aggressive(50),
           turn_speed_moderate(30),
           turn_speed_gentle(15) {}

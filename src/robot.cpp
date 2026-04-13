@@ -8,7 +8,7 @@ Robot::Robot()
       currentMenuScreen(MENU_SCREEN_IR),
       paused(false),
       currentSpeedLevel(SPEED_LEVEL_LOW),
-      currentStrategy(STRATEGY_STING),
+      currentStrategy(STRATEGY_SPEED),
       currentMotorDirection(DIRECTION_STOP)
 {
 }
@@ -36,10 +36,6 @@ void Robot::setup()
 
     // Setup IR sensors
     irSensors.setup();
-
-    // Setup button input
-    ButtonManager buttonManager;
-    buttonManager.setup();
 
     // Apply default speed preset
     applySpeedPreset(currentSpeedLevel);
