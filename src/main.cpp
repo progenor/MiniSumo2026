@@ -1,93 +1,109 @@
-
 #include <Arduino.h>
-#include "robot.h"
-#include "button.h"
-#include "menu.h"
+#include "motors.h"
+#include "pins.h"
+#define IRCount 3
 
-// Global robot instance
-Robot robot;
+int sensorValues[IRCount]; // Filtered sensor values
+int rawValues[IRCount];    // Raw unfiltered sensor values
+int debounceCounter[IRCount];
 
-// Global button manager instance
-ButtonManager buttonManager;
+void initDRV8243()
+{
+    // Note: DRV8243 nSLEEP pin handling would go here if available
+    // For now, assuming driver is pre-configured or always enabled
+    digitalWrite(N_SLEEP, HIGH);
+    delay(2); // Wait 2ms for internal charge pumps to power up and stabilize
+
+    // 4. Pulse nSLEEP LOW for 30 microseconds to clear latched faults
+    digitalWrite(N_SLEEP, LOW);
+    delayMicroseconds(30); // Must be strictly between 20us and 40us
+    digitalWrite(N_SLEEP, HIGH);
+
+    // Wait a moment for the fault logic to reset before driving
+    delay(2);
+}
+
+void backward(int pwm)
+{
+    Serial.println("back" + String(pwm));
+    analogWrite(PWM_A1, pwm); // Motor A forward
+    digitalWrite(PWM_A2, LOW);
+
+    analogWrite(PWM_B1, LOW); // Motor B forward
+    digitalWrite(PWM_B2, pwm);
+}
+
+void forward(int pwm)
+{
+    Serial.println("fwd" + String(pwm));
+    digitalWrite(PWM_A1, LOW);
+    analogWrite(PWM_A2, pwm); // Motor A reverse
+
+    digitalWrite(PWM_B1, pwm);
+    analogWrite(PWM_B2, LOW); // Motor B reverse
+}
+
+void right(int pwm)
+{
+    Serial.println("right" + String(pwm));
+    analogWrite(PWM_A1, LOW); // Motor A forward
+    digitalWrite(PWM_A2, pwm);
+
+    digitalWrite(PWM_B1, LOW);
+    analogWrite(PWM_B2, pwm); // Motor B reverse
+}
+
+void left(int pwm)
+{
+    Serial.println("left" + String(pwm));
+    digitalWrite(PWM_A1, pwm);
+    analogWrite(PWM_A2, LOW); // Motor A reverse
+
+    analogWrite(PWM_B1, pwm); // Motor B forward
+    digitalWrite(PWM_B2, LOW);
+}
+
+void stop()
+{
+    digitalWrite(PWM_A1, LOW);
+    digitalWrite(PWM_A2, LOW);
+    digitalWrite(PWM_B1, LOW);
+    digitalWrite(PWM_B2, LOW);
+}
+
+void read()
+{
+    // Read raw values from IR sensors with debounce filtering
+    // Debounce Filter: Requires DEBOUNCE_THRESHOLD consecutive stable readings
+    // before accepting a state change. This filters out transient spikes from
+    // ground bounce during fast turns and other noise.
+
+    for (int i = 0; i < IRCount; i++)
+    {
+        int rawRead = digitalRead(IRPins[i]);
+        sensorValues[i] = rawRead;
+    }
+}
 
 void setup()
 {
-    robot.setup();
-    buttonManager.setup();
+    pinMode(PWM_A1, OUTPUT);
+    pinMode(PWM_A2, OUTPUT);
+    pinMode(PWM_B1, OUTPUT);
+    pinMode(PWM_B2, OUTPUT);
+    pinMode(N_SLEEP, OUTPUT);
+
+    // Set all motor pins to LOW initially (brake mode)
+    digitalWrite(PWM_A1, LOW);
+    digitalWrite(PWM_A2, LOW);
+    digitalWrite(PWM_B1, LOW);
+    digitalWrite(PWM_B2, LOW);
+
+    initDRV8243();
 }
 
 void loop()
 {
-    // Update button state and detect gestures
-    buttonManager.update();
-    ButtonGesture gesture = buttonManager.getGesture();
-
-    // Handle button input
-    if (gesture != GESTURE_NONE)
-    {
-        robot.handleButtonGesture(gesture);
-    }
-
-    // Update robot sensors and behavior
-    robot.update();
-
-    // Display appropriate screen based on mode
-    RobotMode currentMode = robot.getMode();
-
-    if (currentMode == MODE_MENU)
-    {
-        // Display menu screens based on currentMenuScreen
-        int currentScreen = robot.getCurrentMenuScreen();
-
-        switch (currentScreen)
-        {
-        case MENU_SCREEN_MAIN:
-            robot.getDisplay().drawMainScreen();
-            break;
-
-        case MENU_SCREEN_SPEED:
-            robot.getDisplay().drawSpeedSelectorScreen(robot.getCurrentSpeedLevel());
-            break;
-
-        case MENU_SCREEN_CURRENT:
-        {
-            // Format filtered current readings as strings
-            char motorA_str[10], motorB_str[10];
-            snprintf(motorA_str, sizeof(motorA_str), "%.2f", robot.getMotor().getFilteredMotorCurrent());
-            snprintf(motorB_str, sizeof(motorB_str), "%.2f", robot.getMotor().getFilteredMotorBCurrent());
-            robot.getDisplay().drawCurentReading(motorA_str, motorB_str);
-            break;
-        }
-
-        case MENU_SCREEN_PEAK_CURRENT:
-        {
-            // Format peak current readings as strings
-            char peakA_str[10], peakB_str[10], peakTotal_str[10];
-            snprintf(peakA_str, sizeof(peakA_str), "%.2f", robot.getMotor().getPeakMotorACurrent());
-            snprintf(peakB_str, sizeof(peakB_str), "%.2f", robot.getMotor().getPeakMotorBCurrent());
-            snprintf(peakTotal_str, sizeof(peakTotal_str), "%.2f", robot.getMotor().getTotalPeakCurrent());
-            robot.getDisplay().drawPEAK_Current(peakA_str, peakB_str, peakTotal_str);
-            break;
-        }
-
-        case MENU_SCREEN_IR:
-            robot.getDisplay().displayIR(robot.getIRValues(), IRCount);
-            break;
-
-        case MENU_SCREEN_STRATEGY:
-            robot.getDisplay().drawStrategySelectorScreen(robot.getCurrentStrategy());
-            break;
-
-        case MENU_SCREEN_DIRECTION:
-            robot.getDisplay().drawDirectionIndicatorScreen(robot.getCurrentDirection());
-            break;
-
-        default:
-            robot.getDisplay().drawMainScreen();
-            break;
-        }
-    }
-    // MODE_RUNNING and MODE_PAUSED display handled in robot.update()
-
-    delay(5);
+    right(200);
+    delay(500);
 }
