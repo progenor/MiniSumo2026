@@ -104,6 +104,6 @@ void setup()
 
 void loop()
 {
-    right(200);
+    forward(128);
     delay(500);
 }
