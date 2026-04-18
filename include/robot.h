@@ -69,6 +69,9 @@ private:
     int currentSpeedLevel;
     int currentStrategy;
     int currentMotorDirection;
+    unsigned long lastDecisionTime;                  // Time of last direction decision
+    unsigned long lastTargetDetectionTime;           // Time when target was last detected
+    static const unsigned long TURN_COMMIT_MS = 150; // Minimum time to commit to a turn (ms)
 
     // Decision-making: read sensors and command motors
     void updateBehavior();

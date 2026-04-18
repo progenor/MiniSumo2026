@@ -9,7 +9,9 @@ Robot::Robot()
       paused(false),
       currentSpeedLevel(SPEED_LEVEL_LOW),
       currentStrategy(STRATEGY_SPEED),
-      currentMotorDirection(DIRECTION_STOP)
+      currentMotorDirection(DIRECTION_STOP),
+      lastDecisionTime(0),
+      lastTargetDetectionTime(0)
 {
 }
 
@@ -91,29 +93,48 @@ void Robot::updateBehavior_Speed()
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
-    // ALL sensors detect target -> FULL SPEED PUSH
-    if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 1)
+    // Check if still in turn commitment window
+    bool inCommitmentWindow = (millis() - lastDecisionTime) < TURN_COMMIT_MS;
+
+    // If in commitment window, maintain current direction without re-evaluating sensors
+    if (inCommitmentWindow && currentMotorDirection != DIRECTION_STOP)
     {
-        motor.forward(speedConfig.attack_speed);
-        currentMotorDirection = DIRECTION_FORWARD;
+        if (currentMotorDirection == DIRECTION_FORWARD)
+        {
+            motor.forward(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_LEFT)
+        {
+            motor.left(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_RIGHT)
+        {
+            motor.right(speedConfig.attack_speed);
+        }
+        return;
     }
+
+    // Outside commitment window: evaluate sensors fresh
     // CENTER sensor detects -> DIRECT ATTACK
-    else if (irValues[1] == 1)
+    if (irValues[1] == 1)
     {
         motor.forward(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_FORWARD;
+        lastDecisionTime = millis();
     }
     // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
     else if (irValues[0] == 1)
     {
         motor.left(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_LEFT;
+        lastDecisionTime = millis();
     }
     // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
     else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_RIGHT;
+        lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning in place
     else
@@ -140,23 +161,48 @@ void Robot::updateBehavior_Sting()
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
+    // Check if still in turn commitment window
+    bool inCommitmentWindow = (millis() - lastDecisionTime) < TURN_COMMIT_MS;
+
+    // If in commitment window, maintain current direction without re-evaluating sensors
+    if (inCommitmentWindow && currentMotorDirection != DIRECTION_STOP)
+    {
+        if (currentMotorDirection == DIRECTION_FORWARD)
+        {
+            motor.forward(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_LEFT)
+        {
+            motor.left(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_RIGHT)
+        {
+            motor.right(speedConfig.attack_speed);
+        }
+        return;
+    }
+
+    // Outside commitment window: evaluate sensors fresh
     // CENTER sensor detected (regardless of LEFT/RIGHT) -> DIRECT ATTACK at full speed
     if (irValues[1] == 1)
     {
         motor.forward(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_FORWARD;
+        lastDecisionTime = millis();
     }
     // LEFT sensor only (CENTER not detecting) -> TURN LEFT + FORWARD
     else if (irValues[0] == 1)
     {
         motor.left(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_LEFT;
+        lastDecisionTime = millis();
     }
     // RIGHT sensor only (CENTER not detecting) -> TURN RIGHT + FORWARD
     else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_RIGHT;
+        lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning in place
     else
@@ -184,23 +230,48 @@ void Robot::updateBehavior_Run()
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
+    // Check if still in turn commitment window
+    bool inCommitmentWindow = (millis() - lastDecisionTime) < TURN_COMMIT_MS;
+
+    // If in commitment window, maintain current direction without re-evaluating sensors
+    if (inCommitmentWindow && currentMotorDirection != DIRECTION_STOP)
+    {
+        if (currentMotorDirection == DIRECTION_BACKWARD)
+        {
+            motor.backward(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_LEFT)
+        {
+            motor.left(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_RIGHT)
+        {
+            motor.right(speedConfig.attack_speed);
+        }
+        return;
+    }
+
+    // Outside commitment window: evaluate sensors fresh
     // CENTER sensor detected -> RETREAT BACKWARD
     if (irValues[1] == 1)
     {
         motor.backward(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_BACKWARD;
+        lastDecisionTime = millis();
     }
     // LEFT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
     else if (irValues[0] == 1)
     {
         motor.right(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_RIGHT;
+        lastDecisionTime = millis();
     }
     // RIGHT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
     else if (irValues[2] == 1)
     {
         motor.left(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_LEFT;
+        lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning backward
     else
@@ -274,9 +345,7 @@ void Robot::applySpeedPreset(int level)
         const SpeedPreset &preset = SPEED_PRESETS[level];
         speedConfig.attack_speed = preset.attack;
         speedConfig.search_speed = preset.search;
-        speedConfig.turn_speed_moderate = preset.turn_moderate;
-        speedConfig.turn_speed_gentle = preset.turn_gentle;
-    }
+      }
 }
 
 // ===== GETTER AND SETTER IMPLEMENTATIONS =====

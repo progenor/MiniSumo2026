@@ -58,9 +58,9 @@ void Motor::initDRV8243()
     delay(2);
 }
 
-void Motor::backward(int pwm)
+void Motor::forward(int pwm)
 {
-    Serial.println("back" + String(pwm));
+    Serial.println("fwd" + String(pwm));
     analogWrite(PWM_A1, pwm); // Motor A forward
     digitalWrite(PWM_A2, LOW);
 
@@ -68,9 +68,9 @@ void Motor::backward(int pwm)
     digitalWrite(PWM_B2, pwm);
 }
 
-void Motor::forward(int pwm)
+void Motor::backward(int pwm)
 {
-    Serial.println("fwd" + String(pwm));
+    Serial.println("back" + String(pwm));
     digitalWrite(PWM_A1, LOW);
     analogWrite(PWM_A2, pwm); // Motor A reverse
 
