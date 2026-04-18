@@ -145,7 +145,7 @@ void Robot::updateBehavior_Speed()
 }
 // ===== END SPEED STRATEGY =====
 
-// ===== STING STRATEGY =====
+// ===== STING STRATEGY gondolkodni =====
 // CENTER PRIORITY strategy - handles sensor intersections by prioritizing CENTER sensor
 void Robot::updateBehavior_Sting()
 {
@@ -259,15 +259,15 @@ void Robot::updateBehavior_Run()
         currentMotorDirection = DIRECTION_BACKWARD;
         lastDecisionTime = millis();
     }
-    // LEFT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
-    else if (irValues[0] == 1)
+    // RIGHT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
+    else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_RIGHT;
         lastDecisionTime = millis();
     }
-    // RIGHT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
-    else if (irValues[2] == 1)
+    // LEFT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
+    else if (irValues[0] == 1)
     {
         motor.left(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_LEFT;
@@ -276,8 +276,9 @@ void Robot::updateBehavior_Run()
     // NO sensors detect -> SEARCH by spinning backward
     else
     {
-        motor.left(speedConfig.search_speed);
-        currentMotorDirection = DIRECTION_LEFT;
+      currentMotorDirection = DIRECTION_STOP;
+      motor.stop(); // Stop instead of spinning to create a more distinct behavior
+      lastDecisionTime = millis(); // Reset decision timer to avoid immediate re-evaluation
     }
 }
 // ===== END RUN STRATEGY =====
@@ -287,9 +288,6 @@ void Robot::updateBehavior()
 {
     switch (currentStrategy)
     {
-    case STRATEGY_STING:
-        updateBehavior_Sting();
-        break;
     case STRATEGY_SPEED:
         updateBehavior_Speed();
         break;
@@ -297,7 +295,7 @@ void Robot::updateBehavior()
         updateBehavior_Run();
         break;
     default:
-        updateBehavior_Sting();
+        updateBehavior_Speed();
         break;
     }
 }
