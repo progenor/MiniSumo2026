@@ -69,6 +69,9 @@ private:
     int currentSpeedLevel;
     int currentStrategy;
     int currentMotorDirection;
+    int lastSearchDirection;
+    unsigned long lastDecisionTime;
+    static const unsigned long DECISION_COMMIT_MS = 20;
 
     // Decision-making: read sensors and command motors
     void updateBehavior();

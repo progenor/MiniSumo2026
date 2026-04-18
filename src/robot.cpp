@@ -9,7 +9,8 @@ Robot::Robot()
       paused(false),
       currentSpeedLevel(SPEED_LEVEL_LOW),
       currentStrategy(STRATEGY_SPEED),
-      currentMotorDirection(DIRECTION_STOP)
+      currentMotorDirection(DIRECTION_STOP),
+      lastDecisionTime(0)
 {
 }
 
@@ -87,39 +88,70 @@ void Robot::updateBehavior_Speed()
         return;
     }
 
+    // Check if still in decision commitment window
+    bool inCommitmentWindow = (millis() - lastDecisionTime) < DECISION_COMMIT_MS;
+
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
-    // ALL sensors detect target -> FULL SPEED PUSH
-    if (irValues[0] == 1 && irValues[1] == 1 && irValues[2] == 1)
+    // If in commitment window, maintain current direction
+    if (inCommitmentWindow)
     {
-        motor.forward(speedConfig.attack_speed);
-        currentMotorDirection = DIRECTION_FORWARD;
+        // Keep executing current direction, ignore new sensor inputs
+        if (currentMotorDirection == DIRECTION_FORWARD)
+        {
+            motor.forward(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_LEFT)
+        {
+            motor.left(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_RIGHT)
+        {
+            motor.right(speedConfig.attack_speed);
+        }
+        return;
     }
-    // CENTER sensor detects -> DIRECT ATTACK
-    else if (irValues[1] == 1)
+
+    // Outside commitment window: process sensor inputs
+    if (irValues[1] == 1)
     {
         motor.forward(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_FORWARD;
+        lastSearchDirection = DIRECTION_FORWARD;
+        lastDecisionTime = millis();
     }
     // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
     else if (irValues[0] == 1)
     {
         motor.left(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_LEFT;
+        lastSearchDirection = DIRECTION_LEFT;
+        lastDecisionTime = millis();
     }
     // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
     else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_RIGHT;
+        lastSearchDirection = DIRECTION_RIGHT;
+        lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning in place
     else
     {
-        motor.right(speedConfig.search_speed);
-        currentMotorDirection = DIRECTION_RIGHT;
+        if (lastSearchDirection == DIRECTION_LEFT)
+        {
+            motor.left(speedConfig.search_speed);
+            currentMotorDirection = DIRECTION_LEFT;
+        }
+        else
+        {
+            motor.right(speedConfig.search_speed);
+            currentMotorDirection = DIRECTION_RIGHT;
+        }
+        lastDecisionTime = millis();
     }
 }
 // ===== END SPEED STRATEGY =====
@@ -136,33 +168,60 @@ void Robot::updateBehavior_Sting()
         return;
     }
 
+    // Check if still in decision commitment window
+    bool inCommitmentWindow = (millis() - lastDecisionTime) < DECISION_COMMIT_MS;
+
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
+    // If in commitment window, maintain current direction
+    if (inCommitmentWindow)
+    {
+        // Keep executing current direction, ignore new sensor inputs
+        if (currentMotorDirection == DIRECTION_FORWARD)
+        {
+            motor.forward(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_LEFT)
+        {
+            motor.left(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_RIGHT)
+        {
+            motor.right(speedConfig.attack_speed);
+        }
+        return;
+    }
+
+    // Outside commitment window: process sensor inputs
     // CENTER sensor detected (regardless of LEFT/RIGHT) -> DIRECT ATTACK at full speed
     if (irValues[1] == 1)
     {
         motor.forward(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_FORWARD;
+        lastDecisionTime = millis();
     }
     // LEFT sensor only (CENTER not detecting) -> TURN LEFT + FORWARD
     else if (irValues[0] == 1)
     {
         motor.left(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_LEFT;
+        lastDecisionTime = millis();
     }
     // RIGHT sensor only (CENTER not detecting) -> TURN RIGHT + FORWARD
     else if (irValues[2] == 1)
     {
         motor.right(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_RIGHT;
+        lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning in place
     else
     {
         motor.right(speedConfig.search_speed);
         currentMotorDirection = DIRECTION_RIGHT;
+        lastDecisionTime = millis();
     }
 }
 // ===== END STING STRATEGY =====
@@ -180,33 +239,60 @@ void Robot::updateBehavior_Run()
         return;
     }
 
+    // Check if still in decision commitment window
+    bool inCommitmentWindow = (millis() - lastDecisionTime) < DECISION_COMMIT_MS;
+
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
 
+    // If in commitment window, maintain current direction
+    if (inCommitmentWindow)
+    {
+        // Keep executing current direction, ignore new sensor inputs
+        if (currentMotorDirection == DIRECTION_BACKWARD)
+        {
+            motor.backward(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_LEFT)
+        {
+            motor.left(speedConfig.attack_speed);
+        }
+        else if (currentMotorDirection == DIRECTION_RIGHT)
+        {
+            motor.right(speedConfig.attack_speed);
+        }
+        return;
+    }
+
+    // Outside commitment window: process sensor inputs
     // CENTER sensor detected -> RETREAT BACKWARD
     if (irValues[1] == 1)
     {
         motor.backward(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_BACKWARD;
+        lastDecisionTime = millis();
     }
     // LEFT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
     else if (irValues[0] == 1)
     {
         motor.right(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_RIGHT;
+        lastDecisionTime = millis();
     }
     // RIGHT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
     else if (irValues[2] == 1)
     {
         motor.left(speedConfig.attack_speed);
         currentMotorDirection = DIRECTION_LEFT;
+        lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning backward
     else
     {
         motor.left(speedConfig.search_speed);
         currentMotorDirection = DIRECTION_LEFT;
+        lastDecisionTime = millis();
     }
 }
 // ===== END RUN STRATEGY =====
@@ -274,9 +360,7 @@ void Robot::applySpeedPreset(int level)
         const SpeedPreset &preset = SPEED_PRESETS[level];
         speedConfig.attack_speed = preset.attack;
         speedConfig.search_speed = preset.search;
-        speedConfig.turn_speed_moderate = preset.turn_moderate;
-        speedConfig.turn_speed_gentle = preset.turn_gentle;
-    }
+    } 
 }
 
 // ===== GETTER AND SETTER IMPLEMENTATIONS =====

@@ -33,18 +33,16 @@ struct SpeedPreset
 {
     uint16_t attack;
     uint16_t search;
-    uint16_t turn_moderate;
-    uint16_t turn_gentle;
 };
 
 // Preset configurations
 static const SpeedPreset SPEED_PRESETS[SPEED_LEVEL_COUNT] = {
     // LOW
-    {128, 80, 20, 10},
+    {90, 60},
     // MEDIUM
-    {200, 120, 25, 15},
+    {200, 60},
     // HIGH
-    {255, 180, 40, 25}};
+    {255, 60}};
 
 // Strategy enumeration
 enum Strategy

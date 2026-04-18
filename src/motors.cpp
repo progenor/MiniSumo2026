@@ -1,5 +1,6 @@
 #include "motors.h"
 #include "pins.h"
+#include "hardware/pwm.h"
 
 // Current sensing constants (IPROPI configuration)
 const float R_IPROPI = 1000.0; // Resistor value in Ohms (1kΩ)
@@ -34,6 +35,20 @@ void Motor::setup()
 
     // Configure ADC for current sensing
     analogReadResolution(12); // Set ADC to 12-bit resolution (0-4095)
+    // Configure PWM frequency to 20 kHz for optimal DRV8243 high-current mode
+    // DRV8243 requires high frequency PWM (20 kHz typical) for stable current control
+    // at mid-range PWM values. Default 1 kHz causes faults at PWM < 200.
+    uint slice_A = pwm_gpio_to_slice_num(PWM_A1); // GPIO 9 - Motor A
+    uint slice_B = pwm_gpio_to_slice_num(PWM_B1); // GPIO 20 - Motor B
+
+    // Set PWM frequency to 20 kHz by calculating wrap value
+    // Formula: freq = clock_freq / (top+1) where clock_freq = 125 MHz, divisor = 1
+    // For 20 kHz: top = (125MHz / 20kHz) - 1 = 6249
+    uint16_t wrap = 6249; // 125MHz / (6249+1) = ~20kHz
+    pwm_set_wrap(slice_A, wrap);
+    pwm_set_wrap(slice_B, wrap);
+    pwm_set_enabled(slice_A, true);
+    pwm_set_enabled(slice_B, true);
 
     // Set all motor pins to LOW initially (brake mode)
     digitalWrite(PWM_A1, LOW);
@@ -67,7 +82,7 @@ void Motor::initDRV8243()
     delay(2);
 }
 
-void Motor::backward(int pwm)
+void Motor::forward(int pwm)
 {
     Serial.println("back" + String(pwm));
     analogWrite(PWM_A1, pwm); // Motor A forward
@@ -77,7 +92,7 @@ void Motor::backward(int pwm)
     digitalWrite(PWM_B2, pwm);
 }
 
-void Motor::forward(int pwm)
+void Motor::backward(int pwm)
 {
     Serial.println("fwd" + String(pwm));
     digitalWrite(PWM_A1, LOW);

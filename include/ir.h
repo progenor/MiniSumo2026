@@ -6,7 +6,7 @@
 #include "pins.h"
 
 #define IRCount 3            // Number of IR sensors
-#define DEBOUNCE_THRESHOLD 3 // Number of consecutive stable readings required to accept state change
+#define DEBOUNCE_THRESHOLD 1 // Number of consecutive stable readings required to accept state change
 // extern const uint8_t IRPins[];
 
 class IRSensors
