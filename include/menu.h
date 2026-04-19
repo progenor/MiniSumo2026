@@ -14,9 +14,7 @@
 // Robot mode enumeration
 enum RobotMode
 {
-    MODE_MENU,    // In menu navigation mode
-    MODE_RUNNING, // Running normally (IR behavior active)
-    MODE_PAUSED   // Paused (sensors active, motors stopped)
+    MODE_MENU, // In menu navigation mode
 };
 
 // Speed level enumeration
@@ -47,10 +45,19 @@ static const SpeedPreset SPEED_PRESETS[SPEED_LEVEL_COUNT] = {
 // Strategy enumeration
 enum Strategy
 {
-    STRATEGY_STING = 0,
-    STRATEGY_SPEED = 1,
-    STRATEGY_RUN = 2,
-    STRATEGY_COUNT = 3
+    STRATEGY_ATTACK = 0,
+    STRATEGY_RUN = 1,
+    STRATEGY_COUNT = 2
+};
+
+// ===== ENABLED SCREENS CONFIGURATION =====
+// Choose which 4 screens to display in the menu
+// Available screens: MAIN(0), SPEED(1), IR(2), STRATEGY(3), CURRENT(4), PEAK_CURRENT(5), DIRECTION(6)
+static const int ENABLED_SCREENS[4] = {
+    MENU_SCREEN_MAIN,         // Screen 0: Robot status display
+    MENU_SCREEN_IR,           // Screen 1: IR sensor readings
+    MENU_SCREEN_SPEED,        // Screen 2: Speed selector
+    MENU_SCREEN_STRATEGY      // Screen 3: Strategy selector
 };
 
 // Motor direction enumeration

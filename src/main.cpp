@@ -78,16 +78,11 @@ void loop()
             robot.getDisplay().drawStrategySelectorScreen(robot.getCurrentStrategy());
             break;
 
-        case MENU_SCREEN_DIRECTION:
-            robot.getDisplay().drawDirectionIndicatorScreen(robot.getCurrentDirection());
-            break;
-
         default:
             robot.getDisplay().drawMainScreen();
             break;
         }
     }
-    // MODE_RUNNING and MODE_PAUSED display handled in robot.update()
 
     delay(5);
 }

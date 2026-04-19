@@ -8,7 +8,7 @@ Robot::Robot()
       currentMenuScreen(MENU_SCREEN_IR),
       paused(false),
       currentSpeedLevel(SPEED_LEVEL_LOW),
-      currentStrategy(STRATEGY_SPEED),
+      currentStrategy(STRATEGY_ATTACK),
       currentMotorDirection(DIRECTION_STOP),
       lastDecisionTime(0),
       lastTargetDetectionTime(0)
@@ -56,25 +56,11 @@ void Robot::update()
     // Update motor peak current tracking
     motor.updatePeaks();
 
-    // Handle based on current mode
-    if (currentMode == MODE_MENU)
-    {
-        // Update behavior and display menu screens
-        updateBehavior();
-        // Display will be handled in main.cpp based on currentMenuScreen
-    }
-    else if (currentMode == MODE_PAUSED)
-    {
-        // Paused mode: update behavior but motors are stopped
-        updateBehavior();
-        display.displayIR(getIRValues(), IRCount);
-    }
-    else
-    { // MODE_RUNNING
-        // Normal operation
-        updateBehavior();
-        display.displayIR(getIRValues(), IRCount);
-    }
+    // Autonomous behavior: read sensors and command motors
+    updateBehavior();
+
+    // Display IR sensor readings
+    display.displayIR(getIRValues(), IRCount);
 }
 
 // ===== SPEED STRATEGY =====
@@ -145,74 +131,6 @@ void Robot::updateBehavior_Speed()
 }
 // ===== END SPEED STRATEGY =====
 
-// ===== STING STRATEGY gondolkodni =====
-// CENTER PRIORITY strategy - handles sensor intersections by prioritizing CENTER sensor
-void Robot::updateBehavior_Sting()
-{
-    // Don't execute motor commands if paused
-    if (paused)
-    {
-        motor.stop();
-        currentMotorDirection = DIRECTION_STOP;
-        return;
-    }
-
-    // Get current IR sensor readings
-    int *irValues = irSensors.getAllValues();
-    // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
-
-    // Check if still in turn commitment window
-    bool inCommitmentWindow = (millis() - lastDecisionTime) < TURN_COMMIT_MS;
-
-    // If in commitment window, maintain current direction without re-evaluating sensors
-    if (inCommitmentWindow && currentMotorDirection != DIRECTION_STOP)
-    {
-        if (currentMotorDirection == DIRECTION_FORWARD)
-        {
-            motor.forward(speedConfig.attack_speed);
-        }
-        else if (currentMotorDirection == DIRECTION_LEFT)
-        {
-            motor.left(speedConfig.attack_speed);
-        }
-        else if (currentMotorDirection == DIRECTION_RIGHT)
-        {
-            motor.right(speedConfig.attack_speed);
-        }
-        return;
-    }
-
-    // Outside commitment window: evaluate sensors fresh
-    // CENTER sensor detected (regardless of LEFT/RIGHT) -> DIRECT ATTACK at full speed
-    if (irValues[1] == 1)
-    {
-        motor.forward(speedConfig.attack_speed);
-        currentMotorDirection = DIRECTION_FORWARD;
-        lastDecisionTime = millis();
-    }
-    // LEFT sensor only (CENTER not detecting) -> TURN LEFT + FORWARD
-    else if (irValues[0] == 1)
-    {
-        motor.left(speedConfig.attack_speed);
-        currentMotorDirection = DIRECTION_LEFT;
-        lastDecisionTime = millis();
-    }
-    // RIGHT sensor only (CENTER not detecting) -> TURN RIGHT + FORWARD
-    else if (irValues[2] == 1)
-    {
-        motor.right(speedConfig.attack_speed);
-        currentMotorDirection = DIRECTION_RIGHT;
-        lastDecisionTime = millis();
-    }
-    // NO sensors detect -> SEARCH by spinning in place
-    else
-    {
-        motor.right(speedConfig.search_speed);
-        currentMotorDirection = DIRECTION_RIGHT;
-    }
-}
-// ===== END STING STRATEGY =====
-
 // ===== RUN STRATEGY =====
 // Retreat/Reverse strategy - does the opposite
 // If sensors detect, goes BACKWARD instead of forward
@@ -276,9 +194,9 @@ void Robot::updateBehavior_Run()
     // NO sensors detect -> SEARCH by spinning backward
     else
     {
-      currentMotorDirection = DIRECTION_STOP;
-      motor.stop(); // Stop instead of spinning to create a more distinct behavior
-      lastDecisionTime = millis(); // Reset decision timer to avoid immediate re-evaluation
+        currentMotorDirection = DIRECTION_STOP;
+        motor.stop();                // Stop instead of spinning to create a more distinct behavior
+        lastDecisionTime = millis(); // Reset decision timer to avoid immediate re-evaluation
     }
 }
 // ===== END RUN STRATEGY =====
@@ -288,7 +206,7 @@ void Robot::updateBehavior()
 {
     switch (currentStrategy)
     {
-    case STRATEGY_SPEED:
+    case STRATEGY_ATTACK:
         updateBehavior_Speed();
         break;
     case STRATEGY_RUN:
@@ -302,36 +220,20 @@ void Robot::updateBehavior()
 
 void Robot::handleButtonGesture(ButtonGesture gesture)
 {
+    // Button gestures currently not used in autonomous-only mode
+    // Hardware start module handles motor driver enable
     switch (gesture)
     {
-    case GESTURE_SINGLE_PRESS:
-        // Single press: cycle menu screens (stay in menu)
-        if (currentMode == MODE_MENU)
-        {
-            cycleMenuScreen();
-        }
-        break;
-
     case GESTURE_DOUBLE_PRESS:
-        // Double press: cycle speed presets (only on speed screen) or strategies (on strategy screen)
-        if (currentMenuScreen == MENU_SCREEN_SPEED)
-        {
-            cycleSpeedLevel();
-        }
-        else if (currentMenuScreen == MENU_SCREEN_STRATEGY)
-        {
-            cycleStrategy();
-        }
+        // Could use for real-time strategy toggle if needed
+        // cycleStrategy();
         break;
 
+    case GESTURE_SINGLE_PRESS:
     case GESTURE_LONG_PRESS:
-        // Long press: toggle pause/resume (works from any mode/screen)
-        togglePause();
-        break;
-
     case GESTURE_NONE:
     default:
-        // No gesture detected
+        // No action
         break;
     }
 }
@@ -343,7 +245,7 @@ void Robot::applySpeedPreset(int level)
         const SpeedPreset &preset = SPEED_PRESETS[level];
         speedConfig.attack_speed = preset.attack;
         speedConfig.search_speed = preset.search;
-      }
+    }
 }
 
 // ===== GETTER AND SETTER IMPLEMENTATIONS =====

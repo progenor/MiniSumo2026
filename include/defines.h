@@ -12,19 +12,13 @@
 // These are runtime-mutable values, can be changed from menu
 struct SpeedConfig
 {
-    int attack_speed;
-    int search_speed;
-    int turn_speed_aggressive;
-    int turn_speed_moderate;
-    int turn_speed_gentle;
+    int attack_speed; // Motor speed for direct attacks
+    int search_speed; // Motor speed for searching (spin to find opponent)
 
     // Constructor with defaults
     SpeedConfig()
         : attack_speed(128),
-          search_speed(64),
-          turn_speed_aggressive(50),
-          turn_speed_moderate(30),
-          turn_speed_gentle(15) {}
+          search_speed(64) {}
 };
 
 // Global speed configuration (can be modified at runtime)

@@ -69,8 +69,8 @@ private:
     int currentSpeedLevel;
     int currentStrategy;
     int currentMotorDirection;
-    unsigned long lastDecisionTime;                  // Time of last direction decision
-    unsigned long lastTargetDetectionTime;           // Time when target was last detected
+    unsigned long lastDecisionTime;                 // Time of last direction decision
+    unsigned long lastTargetDetectionTime;          // Time when target was last detected
     static const unsigned long TURN_COMMIT_MS = 50; // Minimum time to commit to a turn (ms)
 
     // Decision-making: read sensors and command motors
@@ -78,7 +78,6 @@ private:
 
     // Strategy implementations
     void updateBehavior_Speed();
-    void updateBehavior_Sting();
     void updateBehavior_Run();
 
     // Apply speed preset to speed config
