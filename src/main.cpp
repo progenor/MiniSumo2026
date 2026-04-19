@@ -36,8 +36,8 @@ void loop()
 
     if (currentMode == MODE_MENU)
     {
-        // Display menu screens based on currentMenuScreen
-        int currentScreen = robot.getCurrentMenuScreen();
+        // Display menu screens based on currentMenuScreen - map through ENABLED_SCREENS array
+        int currentScreen = ENABLED_SCREENS[robot.getCurrentMenuScreen()];
 
         switch (currentScreen)
         {

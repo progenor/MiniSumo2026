@@ -287,12 +287,12 @@ int Robot::getCurrentMenuScreen() const
 
 void Robot::setCurrentMenuScreen(int screen)
 {
-    currentMenuScreen = screen % MENU_SCREEN_COUNT;
+    currentMenuScreen = screen % ENABLED_SCREENS_COUNT;
 }
 
 void Robot::cycleMenuScreen()
 {
-    currentMenuScreen = (currentMenuScreen + 1) % MENU_SCREEN_COUNT;
+    currentMenuScreen = (currentMenuScreen + 1) % ENABLED_SCREENS_COUNT;
 }
 
 bool Robot::isPaused() const
