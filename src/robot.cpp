@@ -223,20 +223,35 @@ void Robot::updateBehavior()
 
 void Robot::handleButtonGesture(ButtonGesture gesture)
 {
-    // Button gestures currently not used in autonomous-only mode
-    // Hardware start module handles motor driver enable
     switch (gesture)
     {
-    case GESTURE_DOUBLE_PRESS:
-        // Could use for real-time strategy toggle if needed
-        // cycleStrategy();
+    case GESTURE_SINGLE_PRESS:
+        // Single click: cycle through menus (MAIN → IR → SPEED → STRATEGY → MAIN)
+        cycleMenuScreen();
         break;
 
-    case GESTURE_SINGLE_PRESS:
+    case GESTURE_DOUBLE_PRESS:
+        // Double click: toggle based on current menu screen
+        {
+            int activeScreen = ENABLED_SCREENS[getCurrentMenuScreen()];
+
+            if (activeScreen == MENU_SCREEN_SPEED)
+            {
+                // On speed menu: cycle through speed levels (LOW → MEDIUM → HIGH → LOW)
+                cycleSpeedLevel();
+            }
+            else if (activeScreen == MENU_SCREEN_STRATEGY)
+            {
+                // On strategy menu: cycle through strategies (ATTACK → RUN → ATTACK)
+                cycleStrategy();
+            }
+        }
+        break;
+
     case GESTURE_LONG_PRESS:
     case GESTURE_NONE:
     default:
-        // No action
+        // No action for long press or none
         break;
     }
 }
