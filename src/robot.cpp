@@ -11,7 +11,7 @@ Robot::Robot()
       currentStrategy(STRATEGY_ATTACK),
       currentMotorDirection(DIRECTION_STOP),
       lastDecisionTime(0),
-      lastTargetDetectionTime(0)
+      modeStartTime(0)
 {
 }
 
@@ -44,6 +44,9 @@ void Robot::setup()
 
     // Play startup melody
     playMelody();
+
+    // Initialize startup timer for first battle
+    modeStartTime = millis();
 
     delay(1000);
 }
@@ -87,15 +90,15 @@ void Robot::updateBehavior_Speed()
     {
         if (currentMotorDirection == DIRECTION_FORWARD)
         {
-            motor.forward(speedConfig.attack_speed);
+            motor.forward(getAttackSpeed());
         }
         else if (currentMotorDirection == DIRECTION_LEFT)
         {
-            motor.left(speedConfig.attack_speed);
+            motor.left(getAttackSpeed());
         }
         else if (currentMotorDirection == DIRECTION_RIGHT)
         {
-            motor.right(speedConfig.attack_speed);
+            motor.right(getAttackSpeed());
         }
         return;
     }
@@ -104,28 +107,28 @@ void Robot::updateBehavior_Speed()
     // CENTER sensor detects -> DIRECT ATTACK
     if (irValues[1] == 1)
     {
-        motor.forward(speedConfig.attack_speed);
+        motor.forward(getAttackSpeed());
         currentMotorDirection = DIRECTION_FORWARD;
         lastDecisionTime = millis();
     }
     // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
     else if (irValues[0] == 1)
     {
-        motor.left(speedConfig.attack_speed);
+        motor.left(getAttackSpeed());
         currentMotorDirection = DIRECTION_LEFT;
         lastDecisionTime = millis();
     }
     // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
     else if (irValues[2] == 1)
     {
-        motor.right(speedConfig.attack_speed);
+        motor.right(getAttackSpeed());
         currentMotorDirection = DIRECTION_RIGHT;
         lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning in place
     else
     {
-        motor.right(speedConfig.search_speed);
+        motor.right(getSearchSpeed());
         currentMotorDirection = DIRECTION_RIGHT;
     }
 }
@@ -156,15 +159,15 @@ void Robot::updateBehavior_Run()
     {
         if (currentMotorDirection == DIRECTION_BACKWARD)
         {
-            motor.backward(speedConfig.attack_speed);
+            motor.backward(getAttackSpeed());
         }
         else if (currentMotorDirection == DIRECTION_LEFT)
         {
-            motor.left(speedConfig.attack_speed);
+            motor.left(getAttackSpeed());
         }
         else if (currentMotorDirection == DIRECTION_RIGHT)
         {
-            motor.right(speedConfig.attack_speed);
+            motor.right(getAttackSpeed());
         }
         return;
     }
@@ -173,21 +176,21 @@ void Robot::updateBehavior_Run()
     // CENTER sensor detected -> RETREAT BACKWARD
     if (irValues[1] == 1)
     {
-        motor.backward(speedConfig.attack_speed);
+        motor.backward(getAttackSpeed());
         currentMotorDirection = DIRECTION_BACKWARD;
         lastDecisionTime = millis();
     }
     // RIGHT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
     else if (irValues[2] == 1)
     {
-        motor.right(speedConfig.attack_speed);
+        motor.right(getAttackSpeed());
         currentMotorDirection = DIRECTION_RIGHT;
         lastDecisionTime = millis();
     }
     // LEFT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
     else if (irValues[0] == 1)
     {
-        motor.left(speedConfig.attack_speed);
+        motor.left(getAttackSpeed());
         currentMotorDirection = DIRECTION_LEFT;
         lastDecisionTime = millis();
     }
@@ -320,6 +323,7 @@ void Robot::setSpeedLevel(int level)
     {
         currentSpeedLevel = level;
         applySpeedPreset(level);
+        modeStartTime = millis(); // Reset startup timer when speed changes
     }
 }
 
@@ -338,6 +342,7 @@ void Robot::setStrategy(int strategy)
     if (strategy >= 0 && strategy < STRATEGY_COUNT)
     {
         currentStrategy = strategy;
+        modeStartTime = millis(); // Reset startup timer when strategy changes
     }
 }
 
@@ -349,4 +354,29 @@ void Robot::cycleStrategy()
 int Robot::getCurrentDirection() const
 {
     return currentMotorDirection;
+}
+
+// ===== STARTUP SPEED HELPERS =====
+// During the first 1 second of operation, use fixed reliable speeds
+// After 1 second, switch to the selected speed preset
+int Robot::getAttackSpeed()
+{
+    // If we're still in startup phase (first 1 second), use fixed speed
+    if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
+    {
+        return 90; // Fixed startup attack speed
+    }
+    // After startup, use the preset speed
+    return speedConfig.attack_speed;
+}
+
+int Robot::getSearchSpeed()
+{
+    // If we're still in startup phase (first 1 second), use fixed speed
+    if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
+    {
+        return 60; // Fixed startup search speed
+    }
+    // After startup, use the preset speed
+    return speedConfig.search_speed;
 }
