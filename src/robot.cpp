@@ -62,8 +62,7 @@ void Robot::update()
     // Autonomous behavior: read sensors and command motors
     updateBehavior();
 
-    // Display IR sensor readings
-    display.displayIR(getIRValues(), IRCount);
+
 }
 
 // ===== SPEED STRATEGY =====
