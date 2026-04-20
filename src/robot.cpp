@@ -65,7 +65,7 @@ void Robot::update()
 
 }
 
-// ===== SPEED STRATEGY =====
+// ===== ATTACK STRATEGY =====
 // Original strategy with all sensor detection
 void Robot::updateBehavior_Speed()
 {
@@ -131,7 +131,7 @@ void Robot::updateBehavior_Speed()
         currentMotorDirection = DIRECTION_RIGHT;
     }
 }
-// ===== END SPEED STRATEGY =====
+// ===== END ATTACK STRATEGY =====
 
 // ===== RUN STRATEGY =====
 // Retreat/Reverse strategy - does the opposite

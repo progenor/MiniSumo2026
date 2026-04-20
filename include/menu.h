@@ -55,10 +55,10 @@ enum Strategy
 // Available screens: MAIN(0), SPEED(1), IR(2), STRATEGY(3), CURRENT(4), PEAK_CURRENT(5)
 
 static const int ENABLED_SCREENS[ENABLED_SCREENS_COUNT] = {
-    MENU_SCREEN_MAIN,      
-    MENU_SCREEN_SPEED,      
-    MENU_SCREEN_IR,         
-    MENU_SCREEN_STRATEGY,   
+    MENU_SCREEN_MAIN,
+    MENU_SCREEN_SPEED,
+    MENU_SCREEN_IR,
+    MENU_SCREEN_STRATEGY,
 };
 
 // Motor direction enumeration
