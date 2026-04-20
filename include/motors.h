@@ -28,11 +28,11 @@ public:
     float getFilteredMotorBCurrent(); // Returns alpha-filtered motor B current
 
     // Peak current tracking methods
-    void updatePeaks(); // Updates peak values based on current readings
-    float getPeakMotorACurrent();  // Returns peak motor A current since last reset
-    float getPeakMotorBCurrent();  // Returns peak motor B current since last reset
-    float getTotalPeakCurrent();   // Returns sum of peak currents
-    void resetPeaks(); // Resets peak values to zero
+    void updatePeaks();           // Updates peak values based on current readings
+    float getPeakMotorACurrent(); // Returns peak motor A current since last reset
+    float getPeakMotorBCurrent(); // Returns peak motor B current since last reset
+    float getTotalPeakCurrent();  // Returns sum of peak currents
+    void resetPeaks();            // Resets peak values to zero
 
 private:
     // Alpha filter configuration

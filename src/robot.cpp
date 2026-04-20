@@ -83,22 +83,22 @@ void Robot::updateBehavior_Speed()
     bool inCommitmentWindow = (millis() - lastDecisionTime) < TURN_COMMIT_MS;
 
     // If in commitment window, maintain current direction without re-evaluating sensors
-    if (inCommitmentWindow && currentMotorDirection != DIRECTION_STOP)
-    {
-        if (currentMotorDirection == DIRECTION_FORWARD)
-        {
-            motor.forward(getAttackSpeed());
-        }
-        else if (currentMotorDirection == DIRECTION_LEFT)
-        {
-            motor.left(getAttackSpeed());
-        }
-        else if (currentMotorDirection == DIRECTION_RIGHT)
-        {
-            motor.right(getAttackSpeed());
-        }
-        return;
-    }
+    // if (inCommitmentWindow && currentMotorDirection != DIRECTION_STOP)
+    // {
+    //     if (currentMotorDirection == DIRECTION_FORWARD)
+    //     {
+    //         motor.forward(getAttackSpeed());
+    //     }
+    //     else if (currentMotorDirection == DIRECTION_LEFT)
+    //     {
+    //         motor.left(getAttackSpeed());
+    //     }
+    //     else if (currentMotorDirection == DIRECTION_RIGHT)
+    //     {
+    //         motor.right(getAttackSpeed());
+    //     }
+    //     return;
+    // }
 
     // Outside commitment window: evaluate sensors fresh
     // CENTER sensor detects -> DIRECT ATTACK
@@ -137,7 +137,7 @@ void Robot::updateBehavior_Speed()
     // NO sensors detect -> SEARCH by spinning in place
     else
     {
-        motor.right(getSearchSpeed());
+        motor.right(speedConfig.search_speed); // Spin in place to search
         currentMotorDirection = DIRECTION_RIGHT;
     }
 }
@@ -401,19 +401,9 @@ int Robot::getAttackSpeed()
     // If we're still in startup phase (first 1 second), use fixed speed
     if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
     {   
-        return 20; // Fixed startup attack speed
+        return 40; // Fixed startup attack speed
     }
     // After startup, use the preset speed
     return speedConfig.attack_speed;
 }
 
-int Robot::getSearchSpeed()
-{
-    // If we're still in startup phase (first 1 second), use fixed speed
-    if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
-    {
-        return 20; // Fixed startup search speed
-    }   
-    // After startup, use the preset speed
-    return speedConfig.search_speed;
-}
