@@ -61,8 +61,6 @@ void Robot::update()
 
     // Autonomous behavior: read sensors and command motors
     updateBehavior();
-
-
 }
 
 // ===== ATTACK STRATEGY =====
@@ -106,6 +104,10 @@ void Robot::updateBehavior_Speed()
     // CENTER sensor detects -> DIRECT ATTACK
     if (irValues[1] == 1)
     {
+        if (currentMotorDirection != DIRECTION_FORWARD)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
         motor.forward(getAttackSpeed());
         currentMotorDirection = DIRECTION_FORWARD;
         lastDecisionTime = millis();
@@ -113,6 +115,10 @@ void Robot::updateBehavior_Speed()
     // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
     else if (irValues[0] == 1)
     {
+        if (currentMotorDirection != DIRECTION_LEFT)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
         motor.left(getAttackSpeed());
         currentMotorDirection = DIRECTION_LEFT;
         lastDecisionTime = millis();
@@ -120,6 +126,10 @@ void Robot::updateBehavior_Speed()
     // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
     else if (irValues[2] == 1)
     {
+        if (currentMotorDirection != DIRECTION_RIGHT)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
         motor.right(getAttackSpeed());
         currentMotorDirection = DIRECTION_RIGHT;
         lastDecisionTime = millis();
@@ -175,6 +185,11 @@ void Robot::updateBehavior_Run()
     // CENTER sensor detected -> RETREAT BACKWARD
     if (irValues[1] == 1)
     {
+        if (currentMotorDirection != DIRECTION_BACKWARD)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
+
         motor.backward(getAttackSpeed());
         currentMotorDirection = DIRECTION_BACKWARD;
         lastDecisionTime = millis();
@@ -182,6 +197,10 @@ void Robot::updateBehavior_Run()
     // RIGHT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
     else if (irValues[2] == 1)
     {
+        if (currentMotorDirection != DIRECTION_RIGHT)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
         motor.right(getAttackSpeed());
         currentMotorDirection = DIRECTION_RIGHT;
         lastDecisionTime = millis();
@@ -189,6 +208,10 @@ void Robot::updateBehavior_Run()
     // LEFT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
     else if (irValues[0] == 1)
     {
+        if (currentMotorDirection != DIRECTION_LEFT)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
         motor.left(getAttackSpeed());
         currentMotorDirection = DIRECTION_LEFT;
         lastDecisionTime = millis();
@@ -377,8 +400,8 @@ int Robot::getAttackSpeed()
 {
     // If we're still in startup phase (first 1 second), use fixed speed
     if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
-    {
-        return 90; // Fixed startup attack speed
+    {   
+        return 20; // Fixed startup attack speed
     }
     // After startup, use the preset speed
     return speedConfig.attack_speed;
@@ -389,8 +412,8 @@ int Robot::getSearchSpeed()
     // If we're still in startup phase (first 1 second), use fixed speed
     if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
     {
-        return 60; // Fixed startup search speed
-    }
+        return 20; // Fixed startup search speed
+    }   
     // After startup, use the preset speed
     return speedConfig.search_speed;
 }
