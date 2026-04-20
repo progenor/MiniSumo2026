@@ -64,8 +64,8 @@ void Motor::forward(int pwm)
     analogWrite(PWM_A1, pwm); // Motor A forward
     digitalWrite(PWM_A2, LOW);
 
-    analogWrite(PWM_B1, LOW); // Motor B forward
-    digitalWrite(PWM_B2, pwm);
+    analogWrite(PWM_B1, pwm); // Motor B forward
+    digitalWrite(PWM_B2, LOW);
 }
 
 void Motor::backward(int pwm)
@@ -74,8 +74,8 @@ void Motor::backward(int pwm)
     digitalWrite(PWM_A1, LOW);
     analogWrite(PWM_A2, pwm); // Motor A reverse
 
-    digitalWrite(PWM_B1, pwm);
-    analogWrite(PWM_B2, LOW); // Motor B reverse
+    digitalWrite(PWM_B1, LOW);
+    analogWrite(PWM_B2, pwm); // Motor B reverse
 }
 
 void Motor::right(int pwm)
@@ -84,8 +84,8 @@ void Motor::right(int pwm)
     analogWrite(PWM_A1, LOW); // Motor A forward
     digitalWrite(PWM_A2, pwm);
 
-    digitalWrite(PWM_B1, LOW);
-    analogWrite(PWM_B2, pwm); // Motor B reverse
+    digitalWrite(PWM_B1, pwm);
+    analogWrite(PWM_B2, LOW); // Motor B reverse
 }
 
 void Motor::left(int pwm)
@@ -94,8 +94,8 @@ void Motor::left(int pwm)
     digitalWrite(PWM_A1, pwm);
     analogWrite(PWM_A2, LOW); // Motor A reverse
 
-    analogWrite(PWM_B1, pwm); // Motor B forward
-    digitalWrite(PWM_B2, LOW);
+    analogWrite(PWM_B1, LOW); // Motor B forward
+    digitalWrite(PWM_B2, pwm);
 }
 
 void Motor::stop()
