@@ -1,5 +1,6 @@
 #include "motors.h"
 #include "pins.h"
+#include "hardware/pwm.h"
 
 // Current sensing constants (IPROPI configuration)
 const float R_IPROPI = 1000.0; // Resistor value in Ohms (1kΩ)
@@ -8,6 +9,9 @@ const float V_REF = 3.3;       // Pico reference voltage
 
 // Alpha filter coefficient for current smoothing
 const float Motor::ALPHA_FILTER = 0.97; // 3% new value, 97% previous (very strong smoothing/low-pass filter)
+
+// Peak reset threshold
+const float Motor::PEAK_RESET_THRESHOLD = 0.5f; // 0.5 Amps
 
 Motor::Motor()
 {
@@ -33,12 +37,32 @@ void Motor::setup()
 
     // Configure ADC for current sensing
     analogReadResolution(12); // Set ADC to 12-bit resolution (0-4095)
+    // Configure PWM frequency to 20 kHz for optimal DRV8243 high-current mode
+    // DRV8243 requires high frequency PWM (20 kHz typical) for stable current control
+    // at mid-range PWM values. Default 1 kHz causes faults at PWM < 200.
+    uint slice_A = pwm_gpio_to_slice_num(PWM_A1); // GPIO 9 - Motor A
+    uint slice_B = pwm_gpio_to_slice_num(PWM_B1); // GPIO 20 - Motor B
+
+    // Set PWM frequency to 20 kHz by calculating wrap value
+    // Formula: freq = clock_freq / (top+1) where clock_freq = 125 MHz, divisor = 1
+    // For 20 kHz: top = (125MHz / 20kHz) - 1 = 6249
+    uint16_t wrap = 6249; // 125MHz / (6249+1) = ~20kHz
+    pwm_set_wrap(slice_A, wrap);
+    pwm_set_wrap(slice_B, wrap);
+    pwm_set_enabled(slice_A, true);
+    pwm_set_enabled(slice_B, true);
 
     // Set all motor pins to LOW initially (brake mode)
     digitalWrite(PWM_A1, LOW);
     digitalWrite(PWM_A2, LOW);
     digitalWrite(PWM_B1, LOW);
     digitalWrite(PWM_B2, LOW);
+
+    // Load previously saved peak values from ROM
+    loadPeaksFromROM();
+
+    // Check and reset any peaks exceeding threshold
+    checkAndResetHighPeaks();
 
     // Initialize DRV8243 driver
     initDRV8243();
@@ -205,6 +229,9 @@ void Motor::updatePeaks()
     {
         peakCurrent_B = currentB;
     }
+
+    // Check and reset any peaks exceeding threshold
+    checkAndResetHighPeaks();
 }
 
 float Motor::getPeakMotorACurrent()
@@ -228,12 +255,92 @@ void Motor::resetPeaks()
     peakCurrent_B = 0.0f;
 }
 
-int Motor::getPWM_A() const
+void Motor::savePeaksToROM()
 {
-    return pwm_A;
+    // Ensure EEPROM is initialized
+    EEPROM.begin(EEPROM_SIZE);
+
+    // Write peak A current (float = 4 bytes)
+    EEPROM.put(EEPROM_ADDR_PEAK_A, peakCurrent_A);
+
+    // Write peak B current (float = 4 bytes)
+    EEPROM.put(EEPROM_ADDR_PEAK_B, peakCurrent_B);
+
+    // Commit changes to flash
+    EEPROM.commit();
+
+    Serial.print("Peaks saved to ROM - Motor A: ");
+    Serial.print(peakCurrent_A);
+    Serial.print(" A, Motor B: ");
+    Serial.print(peakCurrent_B);
+    Serial.println(" A");
 }
 
-int Motor::getPWM_B() const
+void Motor::loadPeaksFromROM()
 {
-    return pwm_B;
+    // Ensure EEPROM is initialized
+    EEPROM.begin(EEPROM_SIZE);
+
+    // Read peak A current from ROM
+    EEPROM.get(EEPROM_ADDR_PEAK_A, peakCurrent_A);
+
+    // Read peak B current from ROM
+    EEPROM.get(EEPROM_ADDR_PEAK_B, peakCurrent_B);
+
+    // Validate loaded values - uninitialized EEPROM may contain garbage (0xFF)
+    // that becomes NaN or infinite when read as float
+    if (isnan(peakCurrent_A) || isinf(peakCurrent_A) || peakCurrent_A < 0)
+    {
+        Serial.println("Motor A peak value invalid (NaN/Inf/Negative) - resetting to 0");
+        peakCurrent_A = 0.0f;
+    }
+
+    if (isnan(peakCurrent_B) || isinf(peakCurrent_B) || peakCurrent_B < 0)
+    {
+        Serial.println("Motor B peak value invalid (NaN/Inf/Negative) - resetting to 0");
+        peakCurrent_B = 0.0f;
+    }
+
+    Serial.print("Peaks loaded from ROM - Motor A: ");
+    Serial.print(peakCurrent_A);
+    Serial.print(" A, Motor B: ");
+    Serial.print(peakCurrent_B);
+    Serial.println(" A");
+}
+
+void Motor::clearPeakROM()
+{
+    // Ensure EEPROM is initialized
+    EEPROM.begin(EEPROM_SIZE);
+
+    // Write zeros to both peak values
+    float zero = 0.0f;
+    EEPROM.put(EEPROM_ADDR_PEAK_A, zero);
+    EEPROM.put(EEPROM_ADDR_PEAK_B, zero);
+
+    // Commit changes to flash
+    EEPROM.commit();
+
+    Serial.println("Peak values cleared from ROM");
+}
+
+void Motor::checkAndResetHighPeaks()
+{
+    // Check Motor A peak
+    if (peakCurrent_A > PEAK_RESET_THRESHOLD)
+    {
+        Serial.print("Motor A peak (");
+        Serial.print(peakCurrent_A);
+        Serial.println("A) exceeds 0.5A threshold - RESET");
+        peakCurrent_A = 0.0f;
+    }
+
+    // Check Motor B peak
+    if (peakCurrent_B > PEAK_RESET_THRESHOLD)
+    {
+        Serial.print("Motor B peak (");
+        Serial.print(peakCurrent_B);
+        Serial.println("A) exceeds 0.5A threshold - RESET");
+        peakCurrent_B = 0.0f;
+    }
 }

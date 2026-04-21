@@ -2,6 +2,7 @@
 #define MOTORS_H
 
 #include <Arduino.h>
+#include <EEPROM.h>
 #include "pins.h"
 
 class Motor
@@ -34,9 +35,10 @@ public:
     float getTotalPeakCurrent();  // Returns sum of peak currents
     void resetPeaks();            // Resets peak values to zero
 
-    // PWM getters
-    int getPWM_A() const; // Returns current PWM value for motor A
-    int getPWM_B() const; // Returns current PWM value for motor B
+    // EEPROM storage methods
+    void savePeaksToROM();   // Saves current peak values to flash memory (EEPROM)
+    void loadPeaksFromROM(); // Loads peak values from flash memory
+    void clearPeakROM();     // Clears saved peak values from ROM
 
 private:
     // Current PWM values
@@ -45,6 +47,14 @@ private:
 
     // Alpha filter configuration
     static const float ALPHA_FILTER; // Filter coefficient (0.97 - very strong smoothing)
+
+    // Peak threshold configuration
+    static const float PEAK_RESET_THRESHOLD; // Reset threshold in Amps (0.5A)
+
+    // EEPROM storage address
+    static const int EEPROM_ADDR_PEAK_A = 0; // Address for peak A current (4 bytes for float)
+    static const int EEPROM_ADDR_PEAK_B = 4; // Address for peak B current (4 bytes for float)
+    static const int EEPROM_SIZE = 8;        // Total bytes needed (2 floats)
 
     // Filter state variables
     float filteredCurrent_A; // Cached filtered value for motor A
@@ -55,6 +65,9 @@ private:
     // Peak tracking variables
     float peakCurrent_A; // Peak current for motor A
     float peakCurrent_B; // Peak current for motor B
+
+    // Helper function to check and reset peaks exceeding threshold
+    void checkAndResetHighPeaks();
 
     // DRV8243 initialization
     void initDRV8243();

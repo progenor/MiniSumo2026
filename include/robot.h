@@ -68,9 +68,11 @@ private:
     bool paused;
     int currentSpeedLevel;
     int currentStrategy;
-    int currentMotorDirection;         // Time when target was last detected
-    unsigned long modeStartTime;                    // Time when strategy/mode started (for startup phase)
-    static const unsigned long STARTUP_FIXED_SPEED_MS = 400; // Use fixed speeds (90 attack, 60 search) for first 1 second
+    int currentMotorDirection;
+    int lastSearchDirection;
+    unsigned long lastDecisionTime;
+    static const unsigned long DECISION_COMMIT_MS = 20;
+
     // Decision-making: read sensors and command motors
     void updateBehavior();
 
