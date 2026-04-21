@@ -20,8 +20,6 @@ void setup()
     if (!logger.begin())
     {
         Serial.println("Warning: Flash logger not available");
-
-        delay(5000);
     }
     else
     {

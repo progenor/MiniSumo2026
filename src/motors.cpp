@@ -89,11 +89,16 @@ void Motor::right(int pwm)
     pwm_A = pwm;
     pwm_B = pwm;
     Serial.println("right" + String(pwm));
-    analogWrite(PWM_A1, LOW); // Motor A forward
-    digitalWrite(PWM_A2, pwm);
+
+    // analogWrite(PWM_A1, LOW); // Motor A forward
+    // digitalWrite(PWM_A2, pwm);
 
     digitalWrite(PWM_B1, pwm);
     analogWrite(PWM_B2, LOW); // Motor B reverse
+
+    //stop other motor
+    digitalWrite(PWM_A1, LOW);
+    digitalWrite(PWM_A2, LOW);
 }
 
 void Motor::left(int pwm)
@@ -104,8 +109,12 @@ void Motor::left(int pwm)
     digitalWrite(PWM_A1, pwm);
     analogWrite(PWM_A2, LOW); // Motor A reverse
 
-    analogWrite(PWM_B1, LOW); // Motor B forward
-    digitalWrite(PWM_B2, pwm);
+    // analogWrite(PWM_B1, LOW); // Motor B forward
+    // digitalWrite(PWM_B2, pwm);
+
+    //stop other motor
+    digitalWrite(PWM_B1, LOW);
+    digitalWrite(PWM_B2, LOW);
 }
 
 void Motor::stop()

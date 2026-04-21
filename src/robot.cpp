@@ -64,7 +64,7 @@ void Robot::update()
 
     // Log telemetry periodically (~every 500ms)
     static unsigned long last_telemetry_log = 0;
-    if ((millis() - last_telemetry_log) > 1000)
+    if ((millis() - last_telemetry_log) > 500)
     {
         // Log motor PWM and current values
         logger.logMotorTelemetry(motor.getPWM_A(), motor.getPWM_B(),
@@ -370,7 +370,7 @@ int Robot::getAttackSpeed()
     // If we're still in startup phase (first 1 second), use fixed speed
     if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
     {
-        return 40; // Fixed startup attack speed
+        return 20; // Fixed startup attack speed
     }
     // After startup, use the preset speed
     return speedConfig.attack_speed;
