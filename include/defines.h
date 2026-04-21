@@ -8,8 +8,6 @@
 #define display_RESET -1
 #define DISPLAY_REFRESH_MS 30 // Display refresh throttle (milliseconds) ~33 FPS
 
-
-
 // --- Speed Configuration Structure ---
 // These are runtime-mutable values, can be changed from menu
 struct SpeedConfig

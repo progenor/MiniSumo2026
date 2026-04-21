@@ -41,10 +41,6 @@ public:
     void clearPeakROM();     // Clears saved peak values from ROM
 
 private:
-    // Current PWM values
-    int pwm_A; // Current PWM for motor A
-    int pwm_B; // Current PWM for motor B
-
     // Alpha filter configuration
     static const float ALPHA_FILTER; // Filter coefficient (0.97 - very strong smoothing)
 

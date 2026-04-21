@@ -8,13 +8,15 @@
 #define MENU_SCREEN_STRATEGY 3
 #define MENU_SCREEN_CURRENT 4
 #define MENU_SCREEN_PEAK_CURRENT 5
-#define MENU_SCREEN_COUNT 6     // Total available screens
-#define ENABLED_SCREENS_COUNT 4 // Only 4 screens shown in menu cycle (see ENABLED_SCREENS)
+#define MENU_SCREEN_DIRECTION 6
+#define MENU_SCREEN_COUNT 7
 
 // Robot mode enumeration
 enum RobotMode
 {
-    MODE_MENU, // In menu navigation mode
+    MODE_MENU,    // In menu navigation mode
+    MODE_RUNNING, // Running normally (IR behavior active)
+    MODE_PAUSED   // Paused (sensors active, motors stopped)
 };
 
 // Speed level enumeration
@@ -45,20 +47,10 @@ static const SpeedPreset SPEED_PRESETS[SPEED_LEVEL_COUNT] = {
 // Strategy enumeration
 enum Strategy
 {
-    STRATEGY_ATTACK = 0,
-    STRATEGY_RUN = 1,
-    STRATEGY_COUNT = 2
-};
-
-// ===== ENABLED SCREENS CONFIGURATION =====
-// All 6 screens enabled for display in the menu
-// Available screens: MAIN(0), SPEED(1), IR(2), STRATEGY(3), CURRENT(4), PEAK_CURRENT(5)
-
-static const int ENABLED_SCREENS[ENABLED_SCREENS_COUNT] = {
-    MENU_SCREEN_MAIN,
-    MENU_SCREEN_SPEED,
-    MENU_SCREEN_IR,
-    MENU_SCREEN_STRATEGY,
+    STRATEGY_STING = 0,
+    STRATEGY_SPEED = 1,
+    STRATEGY_RUN = 2,
+    STRATEGY_COUNT = 3
 };
 
 // Motor direction enumeration

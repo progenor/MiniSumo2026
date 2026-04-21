@@ -76,12 +76,9 @@ private:
     // Decision-making: read sensors and command motors
     void updateBehavior();
 
-    // Speed helpers: return fixed speeds during startup, preset speeds after
-    int getAttackSpeed();
-    int getSearchSpeed();
-
     // Strategy implementations
     void updateBehavior_Speed();
+    void updateBehavior_Sting();
     void updateBehavior_Run();
 
     // Apply speed preset to speed config
