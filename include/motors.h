@@ -34,7 +34,15 @@ public:
     float getTotalPeakCurrent();  // Returns sum of peak currents
     void resetPeaks();            // Resets peak values to zero
 
+    // PWM getters
+    int getPWM_A() const; // Returns current PWM value for motor A
+    int getPWM_B() const; // Returns current PWM value for motor B
+
 private:
+    // Current PWM values
+    int pwm_A; // Current PWM for motor A
+    int pwm_B; // Current PWM for motor B
+
     // Alpha filter configuration
     static const float ALPHA_FILTER; // Filter coefficient (0.97 - very strong smoothing)
 

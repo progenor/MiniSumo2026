@@ -1,4 +1,5 @@
 #include "robot.h"
+#include "logger.h"
 
 // Define global speed configuration (mutable at runtime)
 SpeedConfig speedConfig;
@@ -10,7 +11,6 @@ Robot::Robot()
       currentSpeedLevel(SPEED_LEVEL_LOW),
       currentStrategy(STRATEGY_ATTACK),
       currentMotorDirection(DIRECTION_STOP),
-      lastDecisionTime(0),
       modeStartTime(0)
 {
 }
@@ -61,6 +61,28 @@ void Robot::update()
 
     // Autonomous behavior: read sensors and command motors
     updateBehavior();
+
+    // Log telemetry periodically (~every 500ms)
+    static unsigned long last_telemetry_log = 0;
+    if ((millis() - last_telemetry_log) > 1000)
+    {
+        // Log motor PWM and current values
+        logger.logMotorTelemetry(motor.getPWM_A(), motor.getPWM_B(),
+                                 motor.getFilteredMotorCurrent(), motor.getFilteredMotorBCurrent());
+
+        // Log IR sensor readings
+        int *ir = irSensors.getAllValues();
+        logger.logSensorData(ir[0], ir[1], ir[2]);
+
+        // Log peak currents if detected spike
+        if (motor.getPeakMotorACurrent() > 1.5 || motor.getPeakMotorBCurrent() > 1.5)
+        {
+            logger.logMotorPeaks(motor.getPeakMotorACurrent(),
+                                 motor.getPeakMotorBCurrent());
+        }
+
+        last_telemetry_log = millis();
+    }
 }
 
 // ===== ATTACK STRATEGY =====
@@ -78,29 +100,6 @@ void Robot::updateBehavior_Speed()
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
-
-    // Check if still in turn commitment window
-    bool inCommitmentWindow = (millis() - lastDecisionTime) < TURN_COMMIT_MS;
-
-    // If in commitment window, maintain current direction without re-evaluating sensors
-    // if (inCommitmentWindow && currentMotorDirection != DIRECTION_STOP)
-    // {
-    //     if (currentMotorDirection == DIRECTION_FORWARD)
-    //     {
-    //         motor.forward(getAttackSpeed());
-    //     }
-    //     else if (currentMotorDirection == DIRECTION_LEFT)
-    //     {
-    //         motor.left(getAttackSpeed());
-    //     }
-    //     else if (currentMotorDirection == DIRECTION_RIGHT)
-    //     {
-    //         motor.right(getAttackSpeed());
-    //     }
-    //     return;
-    // }
-
-    // Outside commitment window: evaluate sensors fresh
     // CENTER sensor detects -> DIRECT ATTACK
     if (irValues[1] == 1)
     {
@@ -110,7 +109,6 @@ void Robot::updateBehavior_Speed()
         }
         motor.forward(getAttackSpeed());
         currentMotorDirection = DIRECTION_FORWARD;
-        lastDecisionTime = millis();
     }
     // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
     else if (irValues[0] == 1)
@@ -121,7 +119,6 @@ void Robot::updateBehavior_Speed()
         }
         motor.left(getAttackSpeed());
         currentMotorDirection = DIRECTION_LEFT;
-        lastDecisionTime = millis();
     }
     // RIGHT sensor detects -> TURN RIGHT + FORWARD (angled attack)
     else if (irValues[2] == 1)
@@ -132,7 +129,6 @@ void Robot::updateBehavior_Speed()
         }
         motor.right(getAttackSpeed());
         currentMotorDirection = DIRECTION_RIGHT;
-        lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning in place
     else
@@ -159,29 +155,6 @@ void Robot::updateBehavior_Run()
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
-
-    // Check if still in turn commitment window
-    bool inCommitmentWindow = (millis() - lastDecisionTime) < TURN_COMMIT_MS;
-
-    // If in commitment window, maintain current direction without re-evaluating sensors
-    if (inCommitmentWindow && currentMotorDirection != DIRECTION_STOP)
-    {
-        if (currentMotorDirection == DIRECTION_BACKWARD)
-        {
-            motor.backward(getAttackSpeed());
-        }
-        else if (currentMotorDirection == DIRECTION_LEFT)
-        {
-            motor.left(getAttackSpeed());
-        }
-        else if (currentMotorDirection == DIRECTION_RIGHT)
-        {
-            motor.right(getAttackSpeed());
-        }
-        return;
-    }
-
-    // Outside commitment window: evaluate sensors fresh
     // CENTER sensor detected -> RETREAT BACKWARD
     if (irValues[1] == 1)
     {
@@ -192,7 +165,6 @@ void Robot::updateBehavior_Run()
 
         motor.backward(getAttackSpeed());
         currentMotorDirection = DIRECTION_BACKWARD;
-        lastDecisionTime = millis();
     }
     // RIGHT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
     else if (irValues[2] == 1)
@@ -203,7 +175,6 @@ void Robot::updateBehavior_Run()
         }
         motor.right(getAttackSpeed());
         currentMotorDirection = DIRECTION_RIGHT;
-        lastDecisionTime = millis();
     }
     // LEFT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
     else if (irValues[0] == 1)
@@ -214,14 +185,12 @@ void Robot::updateBehavior_Run()
         }
         motor.left(getAttackSpeed());
         currentMotorDirection = DIRECTION_LEFT;
-        lastDecisionTime = millis();
     }
     // NO sensors detect -> SEARCH by spinning backward
     else
     {
         currentMotorDirection = DIRECTION_STOP;
-        motor.stop();                // Stop instead of spinning to create a more distinct behavior
-        lastDecisionTime = millis(); // Reset decision timer to avoid immediate re-evaluation
+        motor.stop(); // Stop instead of spinning to create a more distinct behavior
     }
 }
 // ===== END RUN STRATEGY =====
@@ -400,10 +369,9 @@ int Robot::getAttackSpeed()
 {
     // If we're still in startup phase (first 1 second), use fixed speed
     if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
-    {   
+    {
         return 40; // Fixed startup attack speed
     }
     // After startup, use the preset speed
     return speedConfig.attack_speed;
 }
-

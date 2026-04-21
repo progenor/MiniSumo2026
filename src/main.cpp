@@ -16,17 +16,18 @@ void setup()
     robot.setup();
     buttonManager.setup();
 
-    // Initialize SD card logger
-    // if (!logger.begin())
-    // {
-    //     Serial.println("Warning: SD card logger not available");
-    // }
-    // else
-    // {
-    //     logger.logBootEvent(logger.getBootCount());
-    //     Serial.print("Boot count: ");
-    //     Serial.println(logger.getBootCount());
-    // }
+    // Initialize flash logger
+    if (!logger.begin())
+    {
+        Serial.println("Warning: Flash logger not available");
+
+        delay(5000);
+    }
+    else
+    {
+        logger.log("BOOT: System started");
+        logger.dumpFlash(); // Dump any existing flash data for debugging
+    }
 }
 
 void loop()
@@ -96,24 +97,6 @@ void loop()
             break;
         }
     }
-
-    // Optional: Log telemetry periodically (every ~1 second), disable by //
-    // static unsigned long last_telemetry_log = 0;
-    // if (logger.isReady() && (millis() - last_telemetry_log) > 1000)
-    // {
-    //     // Log current motor telemetry for diagnostics
-    //     // This helps identify power issues, current spikes, etc.
-    //     logger.logTelemetry(0, 0, robot.getMotor().getFilteredMotorCurrent(),
-    //                         robot.getMotor().getFilteredMotorBCurrent(), 5);
-    //     last_telemetry_log = millis();
-
-    //     // Log high current warnings
-    //     if (robot.getMotor().getTotalPeakCurrent() > 1.2)
-    //     {
-    //         logger.logCurrentSpike(robot.getMotor().getPeakMotorACurrent(),
-    //                                robot.getMotor().getPeakMotorBCurrent());
-    //     }
-    // }
 
     delay(5);
 }

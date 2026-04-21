@@ -1,213 +1,216 @@
 #include "logger.h"
 #include <stdio.h>
-#include <stdarg.h>
+#include <string.h>
 
 Logger logger;
 
+// Flash memory layout:
+// Bytes 0-3: flash_entry_count (uint32_t)
+// Bytes 4+: Flash entries (128 bytes each)
+#define FLASH_METADATA_SIZE 4
+#define FLASH_DATA_START (FLASH_STORAGE_START + FLASH_METADATA_SIZE)
+
 Logger::Logger()
-    : buffer_index(0),
-      last_flush_time(0),
-      sd_initialized(false),
-      boot_count(0)
+    : flash_initialized(false),
+      flash_entry_count(0)
 {
 }
 
 bool Logger::begin()
 {
-    // Initialize SPI for SD card (RP2040 SPI format)
-    // SD.begin() handles SPI setup automatically with default pins
-    // If SD card is on non-default pins, use: SD.begin(chipSelect, SPIBusSpeed)
+    // Initialize EEPROM with default 4KB size
+    EEPROM.begin(FLASH_STORAGE_SIZE);
 
-    if (!SD.begin(SD_CHIP_SELECT))
-    {
-        Serial.println("SD Card initialization failed!");
-        return false;
-    }
+    initFlash();
+    flash_initialized = true;
 
-    sd_initialized = true;
-    Serial.println("SD Card initialized successfully");
-
-    // Read existing boot count
-    readBootCount();
-    incrementBootCount();
-
+    Serial.println("Flash storage initialized");
     return true;
 }
 
-void Logger::log(const char *event_name, const char *details)
+void Logger::initFlash()
 {
-    if (!sd_initialized)
-        return;
-
-    if (buffer_index >= MAX_LOG_BUFFER)
+    // Read entry count from flash metadata
+    uint32_t stored_count = 0;
+    for (int i = 0; i < 4; i++)
     {
-        flush();
+        stored_count |= ((uint32_t)EEPROM.read(FLASH_STORAGE_START + i)) << (i * 8);
     }
 
-    buffer[buffer_index].timestamp_ms = millis();
-    snprintf(buffer[buffer_index].message, sizeof(buffer[buffer_index].message),
-             "[%lu] %s: %s", buffer[buffer_index].timestamp_ms, event_name, details);
-    buffer_index++;
-
-    // Auto-flush based on time interval
-    if ((millis() - last_flush_time) > LOG_BATCH_INTERVAL_MS && buffer_index > 0)
+    // Validate and set entry count
+    if (stored_count > MAX_FLASH_ENTRIES)
     {
-        flush();
+        flash_entry_count = 0;
+        clearFlash();
+    }
+    else
+    {
+        flash_entry_count = stored_count;
     }
 }
 
-void Logger::logf(const char *event_name, const char *format, ...)
+int Logger::getFlashWriteIndex() const
 {
-    if (!sd_initialized)
+    return flash_entry_count % MAX_FLASH_ENTRIES;
+}
+
+void Logger::log(const char *message)
+{
+    if (!flash_initialized)
         return;
 
-    if (buffer_index >= MAX_LOG_BUFFER)
+    writeToFlash(message);
+}
+
+void Logger::logMotorTelemetry(int pwm_a, int pwm_b, float curr_a, float curr_b)
+{
+    if (!flash_initialized)
+        return;
+
+    // Format: "PWM:A=255,B=255 I:A=1.2,B=1.1" (compact for 110 char limit)
+    char msg[110];
+    snprintf(msg, sizeof(msg), "MOTOR: PWM_A=%d PWM_B=%d I_A=%.2f I_B=%.2f",
+             pwm_a, pwm_b, curr_a, curr_b);
+    writeToFlash(msg);
+}
+
+void Logger::logSensorData(int ir_left, int ir_center, int ir_right)
+{
+    if (!flash_initialized)
+        return;
+
+    // Format: "SENS: L=800 C=900 R=750"
+    char msg[110];
+    snprintf(msg, sizeof(msg), "SENS: L=%d C=%d R=%d", ir_left, ir_center, ir_right);
+    writeToFlash(msg);
+}
+
+void Logger::logMotorPeaks(float peak_a, float peak_b)
+{
+    if (!flash_initialized)
+        return;
+
+    // Format: "PEAK: A=2.5 B=2.3"
+    char msg[110];
+    snprintf(msg, sizeof(msg), "PEAK_CURR: A=%.2f B=%.2f", peak_a, peak_b);
+    writeToFlash(msg);
+}
+
+void Logger::writeToFlash(const char *message)
+{
+    if (!flash_initialized || !message)
+        return;
+
+    // Get write position
+    int write_index = getFlashWriteIndex();
+    int write_offset = FLASH_DATA_START + (write_index * FLASH_ENTRY_SIZE);
+
+    // Prepare entry with timestamp
+    FlashLogEntry entry;
+    entry.timestamp_ms = millis();
+
+    // Copy message (max 110 chars for flash)
+    strncpy(entry.message, message, sizeof(entry.message) - 1);
+    entry.message[sizeof(entry.message) - 1] = '\0';
+
+    // Write timestamp (4 bytes)
+    EEPROM.write(write_offset + 0, (entry.timestamp_ms >> 0) & 0xFF);
+    EEPROM.write(write_offset + 1, (entry.timestamp_ms >> 8) & 0xFF);
+    EEPROM.write(write_offset + 2, (entry.timestamp_ms >> 16) & 0xFF);
+    EEPROM.write(write_offset + 3, (entry.timestamp_ms >> 24) & 0xFF);
+
+    // Write message (110 bytes)
+    int msg_len = strlen(entry.message);
+    for (int i = 0; i < 110; i++)
     {
-        flush();
+        if (i < msg_len)
+            EEPROM.write(write_offset + 4 + i, entry.message[i]);
+        else
+            EEPROM.write(write_offset + 4 + i, 0); // Null padding
     }
 
-    char details[150];
-    va_list args;
-    va_start(args, format);
-    vsnprintf(details, sizeof(details), format, args);
-    va_end(args);
+    // Commit changes to EEPROM (non-blocking)
+    EEPROM.commit();
 
-    buffer[buffer_index].timestamp_ms = millis();
-    snprintf(buffer[buffer_index].message, sizeof(buffer[buffer_index].message),
-             "[%lu] %s: %s", buffer[buffer_index].timestamp_ms, event_name, details);
-    buffer_index++;
-
-    // Auto-flush based on time interval
-    if ((millis() - last_flush_time) > LOG_BATCH_INTERVAL_MS && buffer_index > 0)
+    // Increment entry count if not wrapped yet
+    if (flash_entry_count < MAX_FLASH_ENTRIES)
     {
-        flush();
+        flash_entry_count++;
+
+        // Update metadata
+        EEPROM.write(FLASH_STORAGE_START + 0, (flash_entry_count >> 0) & 0xFF);
+        EEPROM.write(FLASH_STORAGE_START + 1, (flash_entry_count >> 8) & 0xFF);
+        EEPROM.write(FLASH_STORAGE_START + 2, (flash_entry_count >> 16) & 0xFF);
+        EEPROM.write(FLASH_STORAGE_START + 3, (flash_entry_count >> 24) & 0xFF);
+        EEPROM.commit();
     }
 }
 
-void Logger::logTelemetry(int pwm_a, int pwm_b, float current_a, float current_b, unsigned int loop_ms)
+void Logger::readFromFlash(int index, char *buffer)
 {
-    if (!sd_initialized)
+    if (!flash_initialized || !buffer || index < 0 || index >= flash_entry_count)
         return;
 
-    if (buffer_index >= MAX_LOG_BUFFER)
-    {
-        flush();
-    }
+    int read_offset = FLASH_DATA_START + (index * FLASH_ENTRY_SIZE);
 
-    buffer[buffer_index].timestamp_ms = millis();
-    snprintf(buffer[buffer_index].message, sizeof(buffer[buffer_index].message),
-             "[%lu] TELEMETRY: pwm_a=%d, pwm_b=%d, current_a=%.2f, current_b=%.2f, loop_ms=%u",
-             buffer[buffer_index].timestamp_ms, pwm_a, pwm_b, current_a, current_b, loop_ms);
-    buffer_index++;
+    // Read timestamp (4 bytes)
+    uint32_t timestamp = 0;
+    timestamp |= ((uint32_t)EEPROM.read(read_offset + 0)) << 0;
+    timestamp |= ((uint32_t)EEPROM.read(read_offset + 1)) << 8;
+    timestamp |= ((uint32_t)EEPROM.read(read_offset + 2)) << 16;
+    timestamp |= ((uint32_t)EEPROM.read(read_offset + 3)) << 24;
 
-    // Auto-flush based on time interval
-    if ((millis() - last_flush_time) > LOG_BATCH_INTERVAL_MS && buffer_index > 0)
+    // Read message (110 bytes)
+    char message[111];
+    for (int i = 0; i < 110; i++)
     {
-        flush();
+        message[i] = EEPROM.read(read_offset + 4 + i);
     }
+    message[110] = '\0';
+
+    // Format output with timestamp
+    snprintf(buffer, 128, "[%lu] %s", timestamp, message);
 }
 
-void Logger::logCurrentSpike(float peak_a, float peak_b)
+int Logger::getFlashEntryCount() const
 {
-    if (!sd_initialized)
-        return;
-
-    if (buffer_index >= MAX_LOG_BUFFER)
-    {
-        flush();
-    }
-
-    buffer[buffer_index].timestamp_ms = millis();
-    snprintf(buffer[buffer_index].message, sizeof(buffer[buffer_index].message),
-             "[%lu] CURRENT_SPIKE: peak_a=%.2f, peak_b=%.2f", buffer[buffer_index].timestamp_ms, peak_a, peak_b);
-    buffer_index++;
+    return flash_entry_count;
 }
 
-void Logger::logBootEvent(uint32_t boot_count)
+void Logger::clearFlash()
 {
-    if (!sd_initialized)
+    if (!flash_initialized)
         return;
 
-    if (buffer_index >= MAX_LOG_BUFFER)
+    // Erase all flash data
+    for (int i = FLASH_STORAGE_START; i < FLASH_STORAGE_SIZE; i++)
     {
-        flush();
+        EEPROM.write(i, 0);
     }
+    EEPROM.commit();
 
-    buffer[buffer_index].timestamp_ms = millis();
-    snprintf(buffer[buffer_index].message, sizeof(buffer[buffer_index].message),
-             "[%lu] BOOT: boot_count=%lu, uptime_start=0", buffer[buffer_index].timestamp_ms, boot_count);
-    buffer_index++;
-
-    flush(); // Flush immediately on boot for critical event
+    flash_entry_count = 0;
+    Serial.println("Flash cleared");
 }
 
-void Logger::flush()
+void Logger::dumpFlash()
 {
-    if (!sd_initialized || buffer_index == 0)
-        return;
-
-    File logfile = SD.open("/battle_log.txt", FILE_WRITE);
-    if (!logfile)
+    if (!flash_initialized)
     {
-        Serial.println("Failed to open log file");
+        Serial.println("Flash not initialized");
         return;
     }
 
-    // Write all buffered entries
-    for (int i = 0; i < buffer_index; i++)
+    Serial.printf("=== Flash Storage Dump ===\n");
+    Serial.printf("Total entries: %d\n", flash_entry_count);
+    Serial.println();
+
+    char buffer[128];
+    for (int i = 0; i < flash_entry_count; i++)
     {
-        logfile.println(buffer[i].message);
+        readFromFlash(i, buffer);
+        Serial.printf("%d: %s\n", i, buffer);
     }
 
-    logfile.close();
-    buffer_index = 0;
-    last_flush_time = millis();
-
-    Serial.println("Log flushed to SD card");
-}
-
-uint32_t Logger::getBootCount()
-{
-    return boot_count;
-}
-
-void Logger::incrementBootCount()
-{
-    boot_count++;
-    saveBootCount();
-}
-
-void Logger::readBootCount()
-{
-    File config_file = SD.open("/config.txt", FILE_READ);
-    if (!config_file)
-    {
-        boot_count = 0;
-        return;
-    }
-
-    char line[50];
-    if (config_file.available())
-    {
-        int len = config_file.readBytesUntil('\n', line, sizeof(line) - 1);
-        line[len] = '\0';
-        sscanf(line, "boot_count=%lu", &boot_count);
-    }
-
-    config_file.close();
-}
-
-void Logger::saveBootCount()
-{
-    File config_file = SD.open("/config.txt", FILE_WRITE);
-    if (!config_file)
-    {
-        Serial.println("Failed to open config file");
-        return;
-    }
-
-    // Truncate and write new value
-    config_file.print("boot_count=");
-    config_file.println(boot_count);
-    config_file.close();
+    Serial.println("=== End Dump ===\n");
 }

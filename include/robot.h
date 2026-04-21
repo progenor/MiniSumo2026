@@ -68,11 +68,9 @@ private:
     bool paused;
     int currentSpeedLevel;
     int currentStrategy;
-    int currentMotorDirection;
-    unsigned long lastDecisionTime;                 // Time of last direction decision, help for turn commitment         // Time when target was last detected
+    int currentMotorDirection;         // Time when target was last detected
     unsigned long modeStartTime;                    // Time when strategy/mode started (for startup phase)
-    static const unsigned long TURN_COMMIT_MS = 5; // Minimum time to commit to a turn (ms)
-    static const unsigned long STARTUP_FIXED_SPEED_MS = 2000; // Use fixed speeds (90 attack, 60 search) for first 1 second
+    static const unsigned long STARTUP_FIXED_SPEED_MS = 400; // Use fixed speeds (90 attack, 60 search) for first 1 second
     // Decision-making: read sensors and command motors
     void updateBehavior();
 

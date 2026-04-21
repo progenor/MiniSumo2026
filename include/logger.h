@@ -2,21 +2,18 @@
 #define LOGGER_H
 
 #include <Arduino.h>
-#include <SD.h>
-#include <SPI.h>
+#include <EEPROM.h>
 
-// SD Card Pins (PlatformIO RP2040 SPI configuration)
-// MISO = GPIO 4,  MOSI = GPIO 7, SCK = GPIO 6, CS = GPIO 5
-#define SD_CHIP_SELECT 5
+// Flash Memory Configuration (RP2040 internal flash)
+#define FLASH_STORAGE_SIZE 4096  // 4KB for logging data
+#define FLASH_STORAGE_START 0x00 // Start of EEPROM-like storage
+#define MAX_FLASH_ENTRIES 20     // Max log entries in flash
+#define FLASH_ENTRY_SIZE 128     // Bytes per entry
 
-// Event log buffer
-#define MAX_LOG_BUFFER 50          // Write to SD every 50 events
-#define LOG_BATCH_INTERVAL_MS 5000 // Or every 5 seconds
-
-struct LogEntry
+struct FlashLogEntry
 {
     unsigned long timestamp_ms;
-    char message[200]; // Event description + values
+    char message[110]; // Smaller for flash storage
 };
 
 class Logger
@@ -24,51 +21,38 @@ class Logger
 public:
     Logger();
 
-    // Initialize SD card
+    // Initialize flash storage
     bool begin();
 
-    // Log an event to buffer
-    void log(const char *event_name, const char *details);
+    // Log an event to flash (non-blocking)
+    void log(const char *message);
 
-    // Log with formatted values: "event_name: key1=value1, key2=value2"
-    void logf(const char *event_name, const char *format, ...);
+    // Log motor telemetry: PWM and current values
+    void logMotorTelemetry(int pwm_a, int pwm_b, float curr_a, float curr_b);
 
-    // Log motor telemetry: timestamp, pwm_A, pwm_B, current_A, current_B, loop_time_ms
-    void logTelemetry(int pwm_a, int pwm_b, float current_a, float current_b, unsigned int loop_ms);
+    // Log sensor data: IR values
+    void logSensorData(int ir_left, int ir_center, int ir_right);
 
-    // Log peak current spike warning
-    void logCurrentSpike(float peak_a, float peak_b);
-
-    // Log reset event
-    void logBootEvent(uint32_t boot_count);
-
-    // Flush buffer to SD card
-    void flush();
-
-    // Get boot count from config file
-    uint32_t getBootCount();
-
-    // Increment and save boot count
-    void incrementBootCount();
+    // Log peak current spikes
+    void logMotorPeaks(float peak_a, float peak_b);
 
     // Get status
-    bool isReady() const { return sd_initialized; }
+    bool isReady() const { return flash_initialized; }
+
+    // Flash storage methods
+    void writeToFlash(const char *message);      // Write single entry to flash (non-blocking)
+    void readFromFlash(int index, char *buffer); // Read entry from flash at index
+    int getFlashEntryCount() const;              // Get number of entries in flash
+    void clearFlash();                           // Clear all flash data
+    void dumpFlash();                            // Print all flash data to Serial
 
 private:
-    LogEntry buffer[MAX_LOG_BUFFER];
-    int buffer_index;
-    unsigned long last_flush_time;
-    bool sd_initialized;
-    uint32_t boot_count;
+    bool flash_initialized;
+    int flash_entry_count; // Current number of entries in flash
 
-    // Write buffer contents to SD
-    void writeToSD();
-
-    // Read boot count from config file
-    void readBootCount();
-
-    // Write boot count to config file
-    void saveBootCount();
+    // Flash helper methods
+    void initFlash();               // Initialize flash storage
+    int getFlashWriteIndex() const; // Get current write position in flash
 };
 
 extern Logger logger;
