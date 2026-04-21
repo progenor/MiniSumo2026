@@ -3,6 +3,7 @@
 #include "robot.h"
 #include "button.h"
 #include "menu.h"
+#include "logger.h"
 
 // Global robot instance
 Robot robot;
@@ -14,6 +15,19 @@ void setup()
 {
     robot.setup();
     buttonManager.setup();
+
+    // Initialize flash logger
+    if (!logger.begin())
+    {
+        Serial.println("Warning: Flash logger not available");
+
+        delay(5000);
+    }
+    else
+    {
+        logger.log("BOOT: System started");
+        logger.dumpFlash(); // Dump any existing flash data for debugging
+    }
 }
 
 void loop()
@@ -36,8 +50,8 @@ void loop()
 
     if (currentMode == MODE_MENU)
     {
-        // Display menu screens based on currentMenuScreen
-        int currentScreen = robot.getCurrentMenuScreen();
+        // Display menu screens based on currentMenuScreen - map through ENABLED_SCREENS array
+        int currentScreen = ENABLED_SCREENS[robot.getCurrentMenuScreen()];
 
         switch (currentScreen)
         {
@@ -78,16 +92,11 @@ void loop()
             robot.getDisplay().drawStrategySelectorScreen(robot.getCurrentStrategy());
             break;
 
-        case MENU_SCREEN_DIRECTION:
-            robot.getDisplay().drawDirectionIndicatorScreen(robot.getCurrentDirection());
-            break;
-
         default:
             robot.getDisplay().drawMainScreen();
             break;
         }
     }
-    // MODE_RUNNING and MODE_PAUSED display handled in robot.update()
 
     delay(5);
 }

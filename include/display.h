@@ -33,11 +33,8 @@ public:
     // Display loading screen with custom bitmap
     void drawLoadingScreen(const char *status = "Loading...");
     void drawMainScreen(void);
-    void drawCurentReading(const char *MotorA_current,
-                           const char *MotorB_current);
-    void drawPEAK_Current(const char *peakA,
-                          const char *peakB,
-                          const char *peakTotal);
+    void drawCurentReading(const char *MotorA_current, const char *MotorB_current);
+    void drawPEAK_Current(const char *peakA, const char *peakB, const char *peakTotal);
 
     // Display IR sensor bars (0-1 digital values)
     void displayIR(int *irValues, int sensorCount);
@@ -47,9 +44,7 @@ public:
 
     // Menu screen methods
     void drawSpeedSelectorScreen(int currentSpeedLevel);
-    void drawSettingsScreen(const char *motorStatus = "ENABLED",
-                            const char *currentA = "0mA",
-                            const char *currentB = "0mA");
+    void drawSettingsScreen(const char *motorStatus = "ENABLED", const char *currentA = "0mA", const char *currentB = "0mA");
     void drawSensorReadingsScreen(int *irValues, int irCount);
     void drawStatusScreen(RobotMode mode, bool isPaused, int currentScreen);
     void drawStrategySelectorScreen(int currentStrategy);

@@ -186,7 +186,7 @@ void Display::drawPEAK_Current(const char *peakA,
 
 static const unsigned char PROGMEM image_Pin_arrow_right_bits[] = {0x04, 0x00, 0x06, 0x00, 0xff, 0x00, 0xff, 0x80, 0xff, 0x00, 0x06, 0x00, 0x04, 0x00};
 
-const char *strategy_names[] = {"Sting", "Speed", "Run"};
+const char *strategy_names[] = {"Attack", "Run"};
 
 void Display::drawStrategySelectorScreen(int currentStrategy)
 {

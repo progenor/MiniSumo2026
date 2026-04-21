@@ -1,4 +1,5 @@
 #include "robot.h"
+#include "logger.h"
 
 // Define global speed configuration (mutable at runtime)
 SpeedConfig speedConfig;
@@ -44,6 +45,9 @@ void Robot::setup()
     // Play startup melody
     playMelody();
 
+    // Initialize startup timer for first battle
+    modeStartTime = millis();
+
     delay(1000);
 }
 
@@ -55,28 +59,33 @@ void Robot::update()
     // Update motor peak current tracking
     motor.updatePeaks();
 
-    // Handle based on current mode
-    if (currentMode == MODE_MENU)
+    // Autonomous behavior: read sensors and command motors
+    updateBehavior();
+
+    // Log telemetry periodically (~every 500ms)
+    static unsigned long last_telemetry_log = 0;
+    if ((millis() - last_telemetry_log) > 1000)
     {
-        // Update behavior and display menu screens
-        updateBehavior();
-        // Display will be handled in main.cpp based on currentMenuScreen
-    }
-    else if (currentMode == MODE_PAUSED)
-    {
-        // Paused mode: update behavior but motors are stopped
-        updateBehavior();
-        display.displayIR(getIRValues(), IRCount);
-    }
-    else
-    { // MODE_RUNNING
-        // Normal operation
-        updateBehavior();
-        display.displayIR(getIRValues(), IRCount);
+        // Log motor PWM and current values
+        logger.logMotorTelemetry(motor.getPWM_A(), motor.getPWM_B(),
+                                 motor.getFilteredMotorCurrent(), motor.getFilteredMotorBCurrent());
+
+        // Log IR sensor readings
+        int *ir = irSensors.getAllValues();
+        logger.logSensorData(ir[0], ir[1], ir[2]);
+
+        // Log peak currents if detected spike
+        if (motor.getPeakMotorACurrent() > 1.5 || motor.getPeakMotorBCurrent() > 1.5)
+        {
+            logger.logMotorPeaks(motor.getPeakMotorACurrent(),
+                                 motor.getPeakMotorBCurrent());
+        }
+
+        last_telemetry_log = millis();
     }
 }
 
-// ===== SPEED STRATEGY =====
+// ===== ATTACK STRATEGY =====
 // Original strategy with all sensor detection
 void Robot::updateBehavior_Speed()
 {
@@ -117,7 +126,11 @@ void Robot::updateBehavior_Speed()
     // Outside commitment window: process sensor inputs
     if (irValues[1] == 1)
     {
-        motor.forward(speedConfig.attack_speed);
+        if (currentMotorDirection != DIRECTION_FORWARD)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
+        motor.forward(getAttackSpeed());
         currentMotorDirection = DIRECTION_FORWARD;
         lastSearchDirection = DIRECTION_FORWARD;
         lastDecisionTime = millis();
@@ -125,7 +138,11 @@ void Robot::updateBehavior_Speed()
     // LEFT sensor detects -> TURN LEFT + FORWARD (angled attack)
     else if (irValues[0] == 1)
     {
-        motor.left(speedConfig.attack_speed);
+        if (currentMotorDirection != DIRECTION_LEFT)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
+        motor.left(getAttackSpeed());
         currentMotorDirection = DIRECTION_LEFT;
         lastSearchDirection = DIRECTION_LEFT;
         lastDecisionTime = millis();
@@ -219,12 +236,12 @@ void Robot::updateBehavior_Sting()
     // NO sensors detect -> SEARCH by spinning in place
     else
     {
-        motor.right(speedConfig.search_speed);
+        motor.right(speedConfig.search_speed); // Spin in place to search
         currentMotorDirection = DIRECTION_RIGHT;
         lastDecisionTime = millis();
     }
 }
-// ===== END STING STRATEGY =====
+// ===== END ATTACK STRATEGY =====
 
 // ===== RUN STRATEGY =====
 // Retreat/Reverse strategy - does the opposite
@@ -269,21 +286,34 @@ void Robot::updateBehavior_Run()
     // CENTER sensor detected -> RETREAT BACKWARD
     if (irValues[1] == 1)
     {
-        motor.backward(speedConfig.attack_speed);
+        if (currentMotorDirection != DIRECTION_BACKWARD)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
+
+        motor.backward(getAttackSpeed());
         currentMotorDirection = DIRECTION_BACKWARD;
         lastDecisionTime = millis();
     }
-    // LEFT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
-    else if (irValues[0] == 1)
+    // RIGHT sensor only -> TURN RIGHT + BACKWARD (opposite of attack)
+    else if (irValues[2] == 1)
     {
-        motor.right(speedConfig.attack_speed);
+        if (currentMotorDirection != DIRECTION_RIGHT)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
+        motor.right(getAttackSpeed());
         currentMotorDirection = DIRECTION_RIGHT;
         lastDecisionTime = millis();
     }
-    // RIGHT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
-    else if (irValues[2] == 1)
+    // LEFT sensor only -> TURN LEFT + BACKWARD (opposite of attack)
+    else if (irValues[0] == 1)
     {
-        motor.left(speedConfig.attack_speed);
+        if (currentMotorDirection != DIRECTION_LEFT)
+        {
+            modeStartTime = millis(); // Reset startup timer only on direction change
+        }
+        motor.left(getAttackSpeed());
         currentMotorDirection = DIRECTION_LEFT;
         lastDecisionTime = millis();
     }
@@ -302,17 +332,14 @@ void Robot::updateBehavior()
 {
     switch (currentStrategy)
     {
-    case STRATEGY_STING:
-        updateBehavior_Sting();
-        break;
-    case STRATEGY_SPEED:
+    case STRATEGY_ATTACK:
         updateBehavior_Speed();
         break;
     case STRATEGY_RUN:
         updateBehavior_Run();
         break;
     default:
-        updateBehavior_Sting();
+        updateBehavior_Speed();
         break;
     }
 }
@@ -322,33 +349,32 @@ void Robot::handleButtonGesture(ButtonGesture gesture)
     switch (gesture)
     {
     case GESTURE_SINGLE_PRESS:
-        // Single press: cycle menu screens (stay in menu)
-        if (currentMode == MODE_MENU)
-        {
-            cycleMenuScreen();
-        }
+        // Single click: cycle through menus (MAIN → IR → SPEED → STRATEGY → MAIN)
+        cycleMenuScreen();
         break;
 
     case GESTURE_DOUBLE_PRESS:
-        // Double press: cycle speed presets (only on speed screen) or strategies (on strategy screen)
-        if (currentMenuScreen == MENU_SCREEN_SPEED)
+        // Double click: toggle based on current menu screen
         {
-            cycleSpeedLevel();
-        }
-        else if (currentMenuScreen == MENU_SCREEN_STRATEGY)
-        {
-            cycleStrategy();
+            int activeScreen = ENABLED_SCREENS[getCurrentMenuScreen()];
+
+            if (activeScreen == MENU_SCREEN_SPEED)
+            {
+                // On speed menu: cycle through speed levels (LOW → MEDIUM → HIGH → LOW)
+                cycleSpeedLevel();
+            }
+            else if (activeScreen == MENU_SCREEN_STRATEGY)
+            {
+                // On strategy menu: cycle through strategies (ATTACK → RUN → ATTACK)
+                cycleStrategy();
+            }
         }
         break;
 
     case GESTURE_LONG_PRESS:
-        // Long press: toggle pause/resume (works from any mode/screen)
-        togglePause();
-        break;
-
     case GESTURE_NONE:
     default:
-        // No gesture detected
+        // No action for long press or none
         break;
     }
 }
@@ -402,12 +428,12 @@ int Robot::getCurrentMenuScreen() const
 
 void Robot::setCurrentMenuScreen(int screen)
 {
-    currentMenuScreen = screen % MENU_SCREEN_COUNT;
+    currentMenuScreen = screen % ENABLED_SCREENS_COUNT;
 }
 
 void Robot::cycleMenuScreen()
 {
-    currentMenuScreen = (currentMenuScreen + 1) % MENU_SCREEN_COUNT;
+    currentMenuScreen = (currentMenuScreen + 1) % ENABLED_SCREENS_COUNT;
 }
 
 bool Robot::isPaused() const
@@ -435,6 +461,7 @@ void Robot::setSpeedLevel(int level)
     {
         currentSpeedLevel = level;
         applySpeedPreset(level);
+        modeStartTime = millis(); // Reset startup timer when speed changes
     }
 }
 
@@ -453,6 +480,7 @@ void Robot::setStrategy(int strategy)
     if (strategy >= 0 && strategy < STRATEGY_COUNT)
     {
         currentStrategy = strategy;
+        modeStartTime = millis(); // Reset startup timer when strategy changes
     }
 }
 
@@ -464,4 +492,18 @@ void Robot::cycleStrategy()
 int Robot::getCurrentDirection() const
 {
     return currentMotorDirection;
+}
+
+// ===== STARTUP SPEED HELPERS =====
+// During the first 1 second of operation, use fixed reliable speeds
+// After 1 second, switch to the selected speed preset
+int Robot::getAttackSpeed()
+{
+    // If we're still in startup phase (first 1 second), use fixed speed
+    if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
+    {
+        return 40; // Fixed startup attack speed
+    }
+    // After startup, use the preset speed
+    return speedConfig.attack_speed;
 }

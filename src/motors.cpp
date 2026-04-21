@@ -22,6 +22,8 @@ Motor::Motor()
     isFirstRead_B = true;
     peakCurrent_A = 0.0f;
     peakCurrent_B = 0.0f;
+    pwm_A = 0;
+    pwm_B = 0;
 }
 
 void Motor::setup()
@@ -84,46 +86,56 @@ void Motor::initDRV8243()
 
 void Motor::forward(int pwm)
 {
-    Serial.println("back" + String(pwm));
+    pwm_A = pwm;
+    pwm_B = pwm;
+    Serial.println("fwd" + String(pwm));
     analogWrite(PWM_A1, pwm); // Motor A forward
     digitalWrite(PWM_A2, LOW);
-
-    analogWrite(PWM_B1, LOW); // Motor B forward
-    digitalWrite(PWM_B2, pwm);
-}
-
-void Motor::backward(int pwm)
-{
-    Serial.println("fwd" + String(pwm));
-    digitalWrite(PWM_A1, LOW);
-    analogWrite(PWM_A2, pwm); // Motor A reverse
-
-    digitalWrite(PWM_B1, pwm);
-    analogWrite(PWM_B2, LOW); // Motor B reverse
-}
-
-void Motor::right(int pwm)
-{
-    Serial.println("right" + String(pwm));
-    analogWrite(PWM_A1, LOW); // Motor A forward
-    digitalWrite(PWM_A2, pwm);
-
-    digitalWrite(PWM_B1, LOW);
-    analogWrite(PWM_B2, pwm); // Motor B reverse
-}
-
-void Motor::left(int pwm)
-{
-    Serial.println("left" + String(pwm));
-    digitalWrite(PWM_A1, pwm);
-    analogWrite(PWM_A2, LOW); // Motor A reverse
 
     analogWrite(PWM_B1, pwm); // Motor B forward
     digitalWrite(PWM_B2, LOW);
 }
 
+void Motor::backward(int pwm)
+{
+    pwm_A = pwm;
+    pwm_B = pwm;
+    Serial.println("back" + String(pwm));
+    digitalWrite(PWM_A1, LOW);
+    analogWrite(PWM_A2, pwm); // Motor A reverse
+
+    digitalWrite(PWM_B1, LOW);
+    analogWrite(PWM_B2, pwm); // Motor B reverse
+}
+
+void Motor::right(int pwm)
+{
+    pwm_A = pwm;
+    pwm_B = pwm;
+    Serial.println("right" + String(pwm));
+    analogWrite(PWM_A1, LOW); // Motor A forward
+    digitalWrite(PWM_A2, pwm);
+
+    digitalWrite(PWM_B1, pwm);
+    analogWrite(PWM_B2, LOW); // Motor B reverse
+}
+
+void Motor::left(int pwm)
+{
+    pwm_A = pwm;
+    pwm_B = pwm;
+    Serial.println("left" + String(pwm));
+    digitalWrite(PWM_A1, pwm);
+    analogWrite(PWM_A2, LOW); // Motor A reverse
+
+    analogWrite(PWM_B1, LOW); // Motor B forward
+    digitalWrite(PWM_B2, pwm);
+}
+
 void Motor::stop()
 {
+    pwm_A = 0;
+    pwm_B = 0;
     digitalWrite(PWM_A1, LOW);
     digitalWrite(PWM_A2, LOW);
     digitalWrite(PWM_B1, LOW);
