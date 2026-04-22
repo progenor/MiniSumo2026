@@ -65,7 +65,6 @@ private:
     // Menu state
     RobotMode currentMode;
     int currentMenuScreen;
-    bool paused;
     int currentSpeedLevel;
     int currentStrategy;
     int currentMotorDirection;         // Time when target was last detected

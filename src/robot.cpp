@@ -1,5 +1,4 @@
 #include "robot.h"
-#include "logger.h"
 
 // Define global speed configuration (mutable at runtime)
 SpeedConfig speedConfig;
@@ -7,7 +6,6 @@ SpeedConfig speedConfig;
 Robot::Robot()
     : currentMode(MODE_MENU),
       currentMenuScreen(MENU_SCREEN_IR),
-      paused(false),
       currentSpeedLevel(SPEED_LEVEL_LOW),
       currentStrategy(STRATEGY_ATTACK),
       currentMotorDirection(DIRECTION_STOP),
@@ -66,20 +64,10 @@ void Robot::update()
     static unsigned long last_telemetry_log = 0;
     if ((millis() - last_telemetry_log) > 500)
     {
-        // Log motor PWM and current values
-        logger.logMotorTelemetry(motor.getPWM_A(), motor.getPWM_B(),
-                                 motor.getFilteredMotorCurrent(), motor.getFilteredMotorBCurrent());
 
         // Log IR sensor readings
         int *ir = irSensors.getAllValues();
-        logger.logSensorData(ir[0], ir[1], ir[2]);
 
-        // Log peak currents if detected spike
-        if (motor.getPeakMotorACurrent() > 1.5 || motor.getPeakMotorBCurrent() > 1.5)
-        {
-            logger.logMotorPeaks(motor.getPeakMotorACurrent(),
-                                 motor.getPeakMotorBCurrent());
-        }
 
         last_telemetry_log = millis();
     }
@@ -89,13 +77,6 @@ void Robot::update()
 // Original strategy with all sensor detection
 void Robot::updateBehavior_Speed()
 {
-    // Don't execute motor commands if paused
-    if (paused)
-    {
-        motor.stop();
-        currentMotorDirection = DIRECTION_STOP;
-        return;
-    }
 
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
@@ -144,14 +125,6 @@ void Robot::updateBehavior_Speed()
 // If sensors detect, goes BACKWARD instead of forward
 void Robot::updateBehavior_Run()
 {
-    // Don't execute motor commands if paused
-    if (paused)
-    {
-        motor.stop();
-        currentMotorDirection = DIRECTION_STOP;
-        return;
-    }
-
     // Get current IR sensor readings
     int *irValues = irSensors.getAllValues();
     // Layout: [0]=LEFT, [1]=CENTER, [2]=RIGHT
@@ -304,19 +277,6 @@ void Robot::cycleMenuScreen()
     currentMenuScreen = (currentMenuScreen + 1) % ENABLED_SCREENS_COUNT;
 }
 
-bool Robot::isPaused() const
-{
-    return paused;
-}
-
-void Robot::togglePause()
-{
-    paused = !paused;
-    if (paused)
-    {
-        motor.stop();
-    }
-}
 
 int Robot::getCurrentSpeedLevel() const
 {
@@ -370,7 +330,7 @@ int Robot::getAttackSpeed()
     // If we're still in startup phase (first 1 second), use fixed speed
     if ((millis() - modeStartTime) < STARTUP_FIXED_SPEED_MS)
     {
-        return 20; // Fixed startup attack speed
+        return 90; // Fixed startup attack speed
     }
     // After startup, use the preset speed
     return speedConfig.attack_speed;

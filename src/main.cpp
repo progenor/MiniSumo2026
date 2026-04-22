@@ -3,7 +3,6 @@
 #include "robot.h"
 #include "button.h"
 #include "menu.h"
-#include "logger.h"
 
 // Global robot instance
 Robot robot;
@@ -13,23 +12,17 @@ ButtonManager buttonManager;
 
 void setup()
 {
+    Serial.begin(115200);
+    
     robot.setup();
     buttonManager.setup();
 
-    // Initialize flash logger
-    if (!logger.begin())
-    {
-        Serial.println("Warning: Flash logger not available");
-    }
-    else
-    {
-        logger.log("BOOT: System started");
-        logger.dumpFlash(); // Dump any existing flash data for debugging
-    }
+    rp2040.wdt_begin(5000);
 }
 
 void loop()
 {
+
     // Update button state and detect gestures
     buttonManager.update();
     ButtonGesture gesture = buttonManager.getGesture();
@@ -97,4 +90,5 @@ void loop()
     }
 
     delay(5);
+    rp2040.wdt_reset();
 }
