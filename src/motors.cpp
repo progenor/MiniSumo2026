@@ -95,7 +95,7 @@ void Motor::right(int pwm)
     analogWrite(PWM_B2, pwm); // Motor B reverse
 
     //spin motor a little bit slower to create sharper turn
-    analogWrite(PWM_A1, pwm / 2); // Motor A forward at half speed
+    analogWrite(PWM_A1, pwm / 8); // Motor A forward at quarter speed
     digitalWrite(PWM_A2, LOW); // Motor A forward
 }
 
@@ -109,7 +109,7 @@ void Motor::left(int pwm)
 
     //spin motor a little bit slower to create sharper turn
     digitalWrite(PWM_B1, LOW); // Motor B forward
-    analogWrite(PWM_B2, pwm / 2); // Motor B forward at half
+    analogWrite(PWM_B2, pwm / 8); // Motor B forward at sixth speed
 }
 
 void Motor::stop()
